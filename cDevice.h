@@ -300,7 +300,7 @@ class cLed : public cRelais, public cTimer {
     uint16_t interval ;
     
   public:
-	cLed(int p, bool ao) : cRelais(p, ao){interval = 1;};
+	cLed(int p, bool ao) : cRelais(p ){interval = 1;};
 	
 	void setBlink() {
 		if ((getValue() == val_off) || (getValue() == val_on) ) {
