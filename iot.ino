@@ -69,56 +69,16 @@ void setup() {
 	theConfig->printEEPROM();
 
 }
-#include "cWifi.h"*/
-//#include "cMqtt.h"
-//#include "cDHT.h"
+*/
+
 #include "cDevice.h"
-
-class cTest : public cObserver {
-//	cDHT22*   theDht;
-	cLed* 	  theLed ;
-//	cDevice*  theTemp ;
-	cClock*   theClock ;
-  public:
-	cTest() {
-		theLed = newLed.create(25, false) ;
-//		theDht = newDHT22.create(5,"1") ;
-//		theTemp = theDht->getTemperatureSensor(); 
-//		theTemp->addObserver(this);
-		theLed->setBlink();
-		theClock= newClock.create();
-		theClock->setTime(0);} ;
-	void onEvent(int i, int e) {
-		Serial.print("Temp"); Serial.println(e); 
-		if (e < 200) theLed->setBlink();
-		else theLed->setOff(); } };
-
-cTest test;
+#include "cMqtt.h"
 
 void setup() {
 	Serial.begin(115200);
 	Serial.println("start");
-//	theCore.setMainChannel(&theMqtt); }
-}
-
-#define hutliburli
-
-void loop() { systemLoop(); 
-	delay(1000);
-#if defined(ARDUINO_RASPBERRY_PI_PICO)
-	Serial.println("ARDUINO_RASPBERRY_PI_PICO");
-#endif
-#if defined(ARDUINO_GENERIC_RP2040)
-	Serial.println("ARDUINO_GENERIC_RP2040");
-#endif
-#if defined(hutliburli)
-	Serial.println("hutliburli");
-#endif
-#if defined(rp2040)
-	Serial.println("rp2040");
-#endif
-#if defined(xx)
-	Serial.println("xx");
-#endif
-
-	Serial.printf("Core temperature: %2.1fC\n", analogReadTemp());}
+	theCore.setMainChannel(&theMqtt);
+	cLatch* l = newLatch.create(12,14,"LRL"); 
+	cLed* led = newLed.create(2, false, "LED") ; }
+	
+void loop() { systemLoop(); }

@@ -159,7 +159,7 @@ class cButton : public cDevice, cLooper {
     cButton(int p, bool ao) {
 		pin = p;
 		activeOn = ao ;
-		pinMode(pin, OUTPUT);
+		pinMode(pin, INPUT);
 		btnState = digitalRead(pin) ;
 		indefinite = false ;
 		toogle() ; }
@@ -187,23 +187,78 @@ class cBtnFactory : public cFactory {
 	cButton* create(int p, bool ao) { return new cButton(p, ao);} } ;
 
 cBtnFactory newButton;
+//----------------------------------------------------------------------
+class cLatch : public cDevice, public cTimer {
+  public:
+    int setPin ;
+    int resetPin ;
+    cLatch(int sp, int rp) {
+		setPin   = sp;
+		resetPin = rp;
+		pinMode(setPin, OUTPUT);
+		pinMode(resetPin, OUTPUT);
+		setOff() ; }
 	
+    void setOn() {
+		digitalWrite(resetPin,LOW) ;
+		digitalWrite(setPin,HIGH) ;
+		setValue(val_on) ;
+		setMillis(500) ; }
+    void setOff() {
+		digitalWrite(setPin,LOW) ;
+		digitalWrite(resetPin,HIGH) ;
+		setValue(val_off) ;
+		setMillis(500) ; }
+    void toogle() {
+		if(getValue() == val_off) setOn() ;
+		else setOff() ; }
+		
+	void onTimeout() {
+		digitalWrite(setPin,LOW) ;
+		digitalWrite(resetPin,LOW) ; }
+		
+    virtual void doComand(int cmd) {
+		switch (cmd) {
+			case cmd_on :
+			  setOn() ;
+			  break ;
+			case cmd_off :
+			  setOff() ;
+			  break ;
+			case cmd_toogle :
+			  toogle() ;
+			  break ; } } } ;
+
+class cLatchFactory : public cFactory {
+  public:
+	cLatchFactory() {strcpy(name,"LATCH");}
+	cLatch* create(int sp, int rp, cb_function  f) {
+		cLatch* d =new cLatch(sp, rp) ;
+		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+		return d ; }
+	cLatch* create(int sp, int rp, char*  n) {
+		cLatch* d =new cLatch(sp, rp) ;
+		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
+		return d ; }
+	cLatch* create(int sp, int rp) { return new cLatch(sp, rp);} } ;
+
+cLatchFactory newLatch;
+//----------------------------------------------------------------------	
 class cRelais : public cDevice {
   public:
     int pin ;
     bool activeOn ;
-    cRelais(int p, bool ao) {
+    cRelais(int p) {
 		pin = p;
-		activeOn = ao ;
 		pinMode(pin, OUTPUT);
 		setOff() ; }
 	
     void setOn() {
-		digitalWrite(pin,activeOn) ;
+		digitalWrite(pin,HIGH) ;
 		setValue(val_on) ;
 	}
     void setOff() {
-		digitalWrite(pin,!activeOn) ;
+		digitalWrite(pin,LOW) ;
 		setValue(val_off) ;
 	}
     void toogle() {
@@ -225,11 +280,21 @@ class cRelais : public cDevice {
 	}
 } ;
 
-cRelais* newCbRelais(int p, bool ao, cb_function  f) {
-	cRelais* d =new cRelais(p, ao) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-	return d ; }
+class cRelFactory : public cFactory {
+  public:
+	cRelFactory() {strcpy(name,"REL");}
+	cRelais* create(int p, cb_function  f) {
+		cRelais* d =new cRelais(p) ;
+		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+		return d ; }
+	cRelais* create(int p, char*  n) {
+		cRelais* d =new cRelais(p) ;
+		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
+		return d ; }
+	cRelais* create(int p) { return new cRelais(p);} } ;
 
+cRelFactory newRelais;
+//----------------------------------------------------------------------
 class cLed : public cRelais, public cTimer {
   private:
     uint16_t interval ;
@@ -300,10 +365,20 @@ class cPoti : public cDevice, cLooper {
 		lastVal = val ;
 		setValue(lastVal) ; } } } ;
 
-cPoti* newCbPoti(int p, cb_function  f) {
-	cPoti* d =new cPoti(p) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-	return d ; }
+class cPotiFactory : public cFactory {
+  public:
+	cPotiFactory() {strcpy(name,"LED");}
+	cPoti* create(int p, cb_function  f) {
+		cPoti* d =new cPoti(p) ;
+		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+		return d ; }
+	cPoti* create(int p, char*  n) {
+		cPoti* d =new cPoti(p) ;
+		cMsgAdapter* cb = new cMsgAdapter(new cValueTranslator(0), n, d);
+		return d ; }
+	cPoti* create(int p) { return new cPoti(p);} } ;
+
+cPotiFactory newPoti;
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
