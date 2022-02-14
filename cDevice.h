@@ -144,9 +144,7 @@ class cCallBackAdapter : public cObserver {
 		device->addObserver(this) ;}
 	void setCallBack(cb_function  f) {callBack = f ;}
 	void onEvent(int i, int c) {if(callBack != NULL)(*callBack)(i, c); } } ;
-
-//----------------------------------------------------------------------
-
+//######################################################################
 class cButton : public cDevice, cLooper {
   private:
     int pin ;
@@ -187,7 +185,7 @@ class cBtnFactory : public cFactory {
 	cButton* create(int p, bool ao) { return new cButton(p, ao);} } ;
 
 cBtnFactory newButton;
-//----------------------------------------------------------------------
+//######################################################################
 class cLatch : public cDevice, public cTimer {
   public:
     int setPin ;
@@ -243,7 +241,7 @@ class cLatchFactory : public cFactory {
 	cLatch* create(int sp, int rp) { return new cLatch(sp, rp);} } ;
 
 cLatchFactory newLatch;
-//----------------------------------------------------------------------	
+//######################################################################	
 class cRelais : public cDevice {
   public:
     int pin ;
@@ -294,7 +292,7 @@ class cRelFactory : public cFactory {
 	cRelais* create(int p) { return new cRelais(p);} } ;
 
 cRelFactory newRelais;
-//----------------------------------------------------------------------
+//######################################################################
 class cLed : public cRelais, public cTimer {
   private:
     uint16_t interval ;

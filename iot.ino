@@ -73,12 +73,19 @@ void setup() {
 
 #include "cDevice.h"
 #include "cMqtt.h"
+#include "cIRrec.h"
+
+cIrRec* IR;
 
 void setup() {
 	Serial.begin(115200);
 	Serial.println("start");
 	theCore.setMainChannel(&theMqtt);
-	cLatch* l = newLatch.create(12,14,"LRL"); 
-	cLed* led = newLed.create(2, false, "LED") ; }
+	cIrRec* irRec = newIrReceiver.create(14, NEC, 0, "irLED") ;
+	cIrProt* irTV = newIrProtocol.create(NEC, 48896,"irTV") ;
+	irRec->addProtocol(irTV) ; }
+
+//	cLatch* l = newLatch.create(12,14,"LRL"); 
+//	cLed* led = newLed.create(2, false, "LED") ; }
 	
 void loop() { systemLoop(); }
