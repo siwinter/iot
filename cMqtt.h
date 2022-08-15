@@ -11,8 +11,9 @@
 #include "IPAddress.h"
 #include "Client.h"
 #include "Stream.h"
-
 #include "cWifi.h"
+#include "cCore.h"
+
 bool ip2Byte(char* txtIP, uint8_t* byteIP) {
 	bool result = false ;
 	int txtLen = strlen(txtIP) ;
@@ -490,7 +491,8 @@ class cMqttChannel : public Print, public cObserved, public cObserver, public cC
 		bufferSize = 0;
 		setBufferSize(MQTT_MAX_PACKET_SIZE);
 		getMAC() ;
-		theWifi.addObserver(this); }
+		theWifi.addObserver(this); 
+		theCore.setMainChannel(this);}
 		
 	void start() {
 		if (!theDataBase.getData("topic", topic, 8)) strcpy(topic, "test");
@@ -523,7 +525,7 @@ class cMqttChannel : public Print, public cObserved, public cObserver, public cC
  }
 
 	void onTimeout() {reconnect();}
-	void onEvent(int i, int e) { if (e ==1)start(); }
+	void onEvent(int i, int e) { if (e ==val_on)start(); }
 
 //###################################### cChannel ######################################
 	void received(char* t, char* c, unsigned int l) {

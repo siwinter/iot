@@ -39,6 +39,7 @@ class cIntervalSensor : public cDevice, public cTimer {
 #define val_on     1
 #define val_toogle 2
 #define val_blink  3
+#define val_wifiAP 12
 
 class cTranslator {
   public:
@@ -125,7 +126,7 @@ class cMsgAdapter : public cMsgHandler, public cObserver {
 
 	void handleMsg(cMsg * msg) { device->doComand(format->str2int(msg->info)) ; } } ;
 
-typedef void (*cb_function)(int, int);
+typedef void (*cb_function)(int);
 
 class cCallBackAdapter : public cObserver {
   protected:
@@ -143,7 +144,7 @@ class cCallBackAdapter : public cObserver {
 		device = d ;
 		device->addObserver(this) ;}
 	void setCallBack(cb_function  f) {callBack = f ;}
-	void onEvent(int i, int c) {if(callBack != NULL)(*callBack)(i, c); } } ;
+	void onEvent(int i, int c) {if(callBack != NULL)(*callBack)(c); } } ;
 //######################################################################
 class cButton : public cDevice, cLooper {
   private:
@@ -246,17 +247,18 @@ class cRelais : public cDevice {
   public:
     int pin ;
     bool activeOn ;
-    cRelais(int p) {
+    cRelais(int p, bool ao) {
 		pin = p;
+		activeOn = ao ;
 		pinMode(pin, OUTPUT);
 		setOff() ; }
 	
     void setOn() {
-		digitalWrite(pin,HIGH) ;
+		digitalWrite(pin,activeOn) ;
 		setValue(val_on) ;
 	}
     void setOff() {
-		digitalWrite(pin,LOW) ;
+		digitalWrite(pin,!activeOn) ;
 		setValue(val_off) ;
 	}
     void toogle() {
@@ -281,15 +283,15 @@ class cRelais : public cDevice {
 class cRelFactory : public cFactory {
   public:
 	cRelFactory() {strcpy(name,"REL");}
-	cRelais* create(int p, cb_function  f) {
-		cRelais* d =new cRelais(p) ;
+	cRelais* create(int p, bool ao, cb_function  f) {
+		cRelais* d =new cRelais(p, ao) ;
 		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
 		return d ; }
-	cRelais* create(int p, char*  n) {
-		cRelais* d =new cRelais(p) ;
+	cRelais* create(int p, bool ao, char*  n) {
+		cRelais* d =new cRelais(p, ao) ;
 		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
 		return d ; }
-	cRelais* create(int p) { return new cRelais(p);} } ;
+	cRelais* create(int p, bool ao) { return new cRelais(p, ao);} } ;
 
 cRelFactory newRelais;
 //######################################################################
@@ -298,7 +300,7 @@ class cLed : public cRelais, public cTimer {
     uint16_t interval ;
     
   public:
-	cLed(int p, bool ao) : cRelais(p ){interval = 1;};
+	cLed(int p, bool ao) : cRelais(p, ao ){interval = 1;};
 	
 	void setBlink() {
 		if ((getValue() == val_off) || (getValue() == val_on) ) {

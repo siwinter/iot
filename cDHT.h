@@ -1,8 +1,22 @@
 /*  Basiert auf Version 1.8 der DHT sensor library for ESPx (.s https://www.arduino.cc/reference/en/libraries/dht-sensor-library-for-espx/)
- * kompatibel zu ATMEL, ESP8266, ESP32 */
+ * kompatibel zu ATMEL, ESP8266, ESP32 
+ * 
+ * Der folgende Sketch erzeugt beim ESP mini die MQTT-Nachrichten
+ *   evt/<ESP-name>/hum_1 : xx
+ *   evt/<ESP-name>/temp_1 : xx.x
+ *   
+ *       #include "cDHT.h"
+ *       #include "cMqtt.h"
+ * 
+ *       void setup() { newDHT22.create(4,"_1") ; }  // Pin 4 ist D02 beim ESP8266
+ *       void loop() { systemLoop(); }
+ * 
+ * */
  
 #ifndef DHT22_h
 #define DHT22_h
+
+#include "cDevice.h"
 
 //######################################## DHTesp.h ########################################
 
@@ -593,7 +607,7 @@ float DHTesp::computeAbsoluteHumidity(float temperature, float percentHumidity, 
 
 //######################################### cDHT.h #########################################
 
-class cDHT22 : public cIntervalSensor{
+class cDHT22 : public cIntervalSensor {
   private:
 	DHTesp dht;
 	uint8_t pin ;
@@ -601,7 +615,7 @@ class cDHT22 : public cIntervalSensor{
 	cDevice humid ;
 	
   public:
-	cDHT22(int p) { 
+	cDHT22(int p) {
 		pin = p ;
 		setInterval(10) ; 
 		dht.setup(pin, DHTesp::DHT22); } // Connect DHT sensor to GPIO 17;

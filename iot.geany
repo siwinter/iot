@@ -19,7 +19,7 @@ indent_mode=2
 
 [project]
 name=iot
-base_path=/home/swinter/Projekte/iot/
+base_path=/home/swinter/Schreibtisch/iot/
 description=
 
 [long line marker]
@@ -27,16 +27,17 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=8
-FILE_NAME_0=1531;Make;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2FMakefile;0;4
-FILE_NAME_1=2989;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2FcIRrec.h;0;4
-FILE_NAME_2=1771;Arduino;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2Fiot.ino;0;4
-FILE_NAME_3=9852;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2Flibs%2FIRremote.hpp;0;4
-FILE_NAME_4=488;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2Flibs%2FIRReceive.hpp;0;4
-FILE_NAME_5=1480;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2FcDevice.h;0;4
-FILE_NAME_6=7227;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2Flibs%2FIRremoteInt.h;0;4
-FILE_NAME_7=1802;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FProjekte%2Fiot%2Flibs%2FIRProtocol.h;0;4
-FILE_NAME_8=1244;Arduino;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2F.cache%2F.fr-YApudE%2Fschlampe%2Fschlampe.ino;0;4
+current_page=3
+FILE_NAME_0=1531;Make;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FMakefile;0;4
+FILE_NAME_1=2466;Arduino;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2Fiot.ino;0;4
+FILE_NAME_2=0;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcDevice.h;0;4
+FILE_NAME_3=4771;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcCore.h;0;4
+FILE_NAME_4=16760;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcMqtt.h;0;4
+FILE_NAME_5=0;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcChannel.h;0;4
+FILE_NAME_6=2891;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcWifi.h;0;4
+FILE_NAME_7=6;Arduino;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FsimpleMQTT.ino;0;4
+FILE_NAME_8=11858;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcDHT.h;0;4
+FILE_NAME_9=3608;C++;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fiot%2FcDatabase.h;0;4
 
 [VTE]
 last_dir=/home/swinter

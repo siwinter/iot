@@ -90,7 +90,7 @@ const char* htmlWifi =
 			"<p>PWD: <input type=\"text\" name=\"pwd\"pattern=\"{,9}\" ></p>"
 			"<p><input type=\"submit\"></p></form></p>";
 
-class cWifi : public cTimer, public cObserved, public cObserver , public cWebElement {
+class cWifi : public cTimer, public cDevice, public cObserver , public cWebElement {
   private :
 	char stationPwd[20] ;
 	char stationSsid[20] ;
@@ -116,7 +116,7 @@ class cWifi : public cTimer, public cObserved, public cObserver , public cWebEle
 		else {
 			WiFi.mode(WIFI_AP);
 			WiFi.softAP("newIoT"); 
-			fireEvent(2);} }
+			setValue(val_wifiAP);} }
 			
 	const char* getLocalIP() {return localIP;}
 
@@ -135,7 +135,7 @@ class cWifi : public cTimer, public cObserved, public cObserver , public cWebEle
 	void onDisconnected() {
 		Serial.println("cWifi : Disconnected");
 		strcpy(localIP,"");
-		fireEvent(0);
+		setValue(val_off);
 		reconnect();}
 
 	void onTimeout() {
@@ -143,13 +143,13 @@ class cWifi : public cTimer, public cObserved, public cObserver , public cWebEle
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
 			WiFi.softAP("newIoT");
-			fireEvent(2);
+			setValue(val_wifiAP);
 			 } }
 			
 	void onGotIP(){
 		WiFi.localIP().toString().toCharArray(localIP, 16) ;
 		Serial.print("cWifi : onGotIP "); Serial.println(localIP);
-		fireEvent(1);}
+		setValue(val_on);}
 		
 		String toString() const;
 	 

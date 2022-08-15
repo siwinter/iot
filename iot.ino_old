@@ -69,7 +69,7 @@ void setup() {
 	theConfig->printEEPROM();
 
 }
-
+*/
 
 #include "cDevice.h"
 #include "cMqtt.h"
@@ -88,18 +88,4 @@ void setup() {
 //	cLatch* l = newLatch.create(12,14,"LRL"); 
 //	cLed* led = newLed.create(2, false, "LED") ; }
 	
-void loop() { systemLoop(); }
-*/
-
-/*
- * Die Anwendung läuft auf einem sonoff.
- * Wenn die Verbindung zum WiFi-Accesspoint verloren geht (weil der Router abgeschaltet wurde),
- * dann wird wir nach 10 min auch das angeschlossene Gerät ausgeschalttet.
- */
-
-#include "cDHT.h"
-#include "cMqtt.h"
-
-void setup() { 
-	newDHT22.create(4,"_1") ; }
 void loop() { systemLoop(); }

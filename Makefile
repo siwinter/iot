@@ -11,8 +11,8 @@
 # make monitor
 #
 # Or uncomment a board/port below to always use a specific board for
-# this project. Alernately you can use a 'board.mk' file to specify
-# a board for this project. See board.mk.sample for details
+# a board for this project. See board.mk.sample for de
+# this project. Alernately you can use a 'board.mk' file to specifytails
 #########################################################################
 
 #BOARD = arduino:avr:pro:cpu=8MHzatmega328                              # Arduino Pro or Pro Mini (ATmega328 /8MHz)
