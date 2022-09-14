@@ -6,6 +6,20 @@
 uint8_t version = 2 ;
 const char * txtVersion = "0.0.2" ;
 
+#define cmd_off    0
+#define cmd_on     1
+#define cmd_toogle 2
+#define cmd_blink  3
+
+#define val_off    		 0
+#define val_on     		 1
+#define val_toogle 		 2
+#define val_blink  		 3
+#define val_connected 	 4
+#define val_wifiAP 		12
+
+
+
 class cLooper ;
 cLooper * aLooper ;
 
@@ -92,7 +106,7 @@ class cObserved {
 		int i = 0 ;
 		while (o != NULL){o->item->onEvent(index, c); o = o->nextLink; } } };
 int  cObserved :: oNumber = 0 ;
-
+/*
 #define cNamLen 20
 #define cInfoLen 20
 class cMsg {
@@ -141,7 +155,7 @@ class cMsgQueue {
 		a=first;
 		Serial.print(name) ;Serial.println(":") ;
 		while (a != NULL) { Serial.println((uint32_t)a); a=a->nextMsg;}
-		Serial.println(); }*/ } ;
+		Serial.println(); } } ;
 
 cMsg* cMsgQueue :: freeAnchor = NULL ;  // static freeAnchor of common chain for all queues 
 
@@ -164,7 +178,7 @@ class cMsgHandler {
 		
 	cMsg* newMsg() {return writeQueue->newMsg();}
 	void writeMsg(cMsg* msg) {writeQueue->insert(msg); }
-	
+	bool receiveCmd(cMsg* msg) {return onMsg(msg); }             //s.w. zusammenfassen
 	bool onMsg( cMsg * m) {
 //		Serial.print("cMsgHandler : onMsg : msg->name : "); Serial.println(m->name);
 		int j ;
@@ -180,7 +194,7 @@ class cMsgHandler {
 
 char systemName[8] ;			// siwi: sollte der systemname werden!
 
-class cChannel {
+class cOldChannel {
   protected:
 	cMsgQueue * receivedQueue ;
     int topicLen ;
@@ -196,21 +210,21 @@ class cChannel {
   public:
 	void setQueue(cMsgQueue* q) { receivedQueue = q ; }
 	virtual bool sendMsg(cMsg * msg) = 0 ; } ;
-
+*/
 class cCore : public cLooper {
   public:
-	cChannel  * mainChannel ;
+//	cOldChannel  * mainChannel ;
 
 	cCore() {
-		outQueue = new cMsgQueue() ;
-		outQueue->setName("out");
-		inQueue = new cMsgQueue() ;
-		inQueue->setName("in"); 
+//		outQueue = new cMsgQueue() ;
+//		outQueue->setName("out");
+//		inQueue = new cMsgQueue() ;
+//		inQueue->setName("in"); 
 		aTimer = NULL ;}
 
-	void setMainChannel(cChannel * c) {
-		mainChannel = c ;
-		mainChannel->setQueue(inQueue); }
+//	void setMainChannel(cOldChannel * c) {
+//		mainChannel = c ;
+//		mainChannel->setQueue(inQueue); }
 				
 	void onLoop() {
 		// treat timers
@@ -221,20 +235,21 @@ class cCore : public cLooper {
 				t->timeToExpire = 0 ;
 				t->onTimeout() ; } }
 		// treat outQueue (send message)
-		cMsg* m = outQueue->read() ;
-		if (m != NULL) { if (mainChannel->sendMsg(m)){outQueue->remove() ;}}
+//		cMsg* m = outQueue->read() ;
+//		if (m != NULL) { if (mainChannel->sendMsg(m)){outQueue->remove() ;}}
 		// treat inQueue (receive message)
-		m = inQueue->read() ;
-		if(m != NULL) {
+//		m = inQueue->read() ;
+//		if(m != NULL) {
 //			Serial.print("onLoop : inQueue read ");Serial.print(m->name);Serial.print(":");Serial.println(m->info);
-			cMsgHandler * d = aHandler ;
-			while(d != NULL) {
+//			cMsgHandler * d = aHandler ;
+/*			while(d != NULL) {
 				if(d->onMsg(m)) break ;
 				d=d->nextHandler ;}
-			inQueue->remove(); } } } ;
+			inQueue->remove(); } */} } ;
 
 cCore theCore;
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+/*
 class cFactory ;
 cFactory * aFactory;
 
@@ -257,6 +272,7 @@ class cCreator : public cMsgHandler {
 		cFactory* getFirstFactory(); } } ;
 
 cCreator Creator;
+*/
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class cSetup ;
 cSetup * aSetup;

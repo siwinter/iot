@@ -101,9 +101,9 @@ class cWifi : public cTimer, public cDevice, public cObserver , public cWebEleme
 		strcpy(localIP,"");
 		theDataBase.addObserver(this);}
 	
-	void onEvent(int i, int evt) { start();}			// EEPROM available
-	void start(){
-//		Serial.println("cWifi : start");
+	void onEvent(int i, int evt) { init();}			// EEPROM available
+	void init(){
+//		Serial.println("cWifi : init");
 		if (theDataBase.getData("ssid", stationSsid, 20)) {
 			theDataBase.getData("pwd", stationPwd, 20);
 			if(theDataBase.getData("apSSid", apSsid, 20)) {
@@ -122,7 +122,7 @@ class cWifi : public cTimer, public cDevice, public cObserver , public cWebEleme
 
 	void reconnect() {
 //		WiFi.disconnect();
-		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
+//		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
 		WiFi.begin(stationSsid, stationPwd); }
 		
 	void setAuth(char* ssid, char* pw) {
@@ -130,10 +130,10 @@ class cWifi : public cTimer, public cDevice, public cObserver , public cWebEleme
 		theDataBase.setData("ssid",stationSsid,strlen(stationSsid));
 		strcpy(stationPwd, pw);
 		theDataBase.setData("pwd",stationPwd,strlen(stationPwd));
-		start(); }
+		init(); }
 
 	void onDisconnected() {
-		Serial.println("cWifi : Disconnected");
+//		Serial.println("cWifi : Disconnected");
 		strcpy(localIP,"");
 		setValue(val_off);
 		reconnect();}
@@ -148,7 +148,7 @@ class cWifi : public cTimer, public cDevice, public cObserver , public cWebEleme
 			
 	void onGotIP(){
 		WiFi.localIP().toString().toCharArray(localIP, 16) ;
-		Serial.print("cWifi : onGotIP "); Serial.println(localIP);
+//		Serial.print("cWifi : onGotIP "); Serial.println(localIP);
 		setValue(val_on);}
 		
 		String toString() const;
