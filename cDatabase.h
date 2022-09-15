@@ -60,7 +60,8 @@ class cDatabase : public cObserved, public cTimer {
 			return; }
 #endif
 		if ( !checkEEPROM()) formatEEPROM() ;
-		fireEvent(1);}
+//		Serial.println("cDatabase fireEvent");
+		fireEvent(val_on);}
 	
 	void deleteData(char* key) {
 		int adr = findKey(key, 3) ;

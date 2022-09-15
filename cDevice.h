@@ -24,107 +24,12 @@ class cIntervalSensor : public cDevice, public cTimer {
 	virtual void measure() = 0 ;
 	void setInterval(uint16_t i) {
 		interval = i ;
-		setMillis(random(interval * 1000)) ; }
+		int h = random(interval * 1000) ;
+		setMillis(h) ; }
 	void onTimeout() {
 		measure() ;
 		setTimer(interval); } } ;
 
-
-#define cmd_off    0
-#define cmd_on     1
-#define cmd_toogle 2
-#define cmd_blink  3
-
-#define val_off    0
-#define val_on     1
-#define val_toogle 2
-#define val_blink  3
-#define val_wifiAP 12
-
-class cTranslator {
-  public:
-	virtual char* int2str(char* s, int i) = 0;
-	virtual int str2int(char* s) = 0; } ;
-
-class cStateTranslator : public cTranslator {
-	char* int2str(char* s, int i) {
-		switch (i) {
-		  case val_off :
-			strcpy(s,"off") ;
-			break ;
-		  case val_on :
-			strcpy(s,"on") ;
-			break ;
-		  case val_toogle :
-			strcpy(s,"toogle") ;
-			break ;
-		  case val_blink :
-			strcpy(s,"blink") ;
-			break ; }
-		return s; };
-		
-	int str2int(char* s) {
-		if (strcmp(s, "off") == 0) return cmd_off ;
-		if (strcmp(s, "on") == 0) return cmd_on ;
-		if (strcmp(s, "toogle") == 0) return cmd_toogle ;
-		if (strcmp(s, "blink") == 0) return cmd_blink ; 
-		return 99 ;} ; } ;
-
-class cValueTranslator : public cTranslator {
-	char* int2str(char* s, int v) {
-		uint16_t i = 0 ;
-		if (v < 0) s[i++] = '-' ;
-		v = abs(v) ;
-		char rS[15] ;	// reverse string
-		uint8_t l = 0 ;
-		while (v > 0) {
-			uint8_t d = v % 10 ;
-			rS[l++] = (char)(d +'0');
-			v = v /10 ; }
-		while (l<(decimals + 1)) rS[l++] = '0' ;
-		while (l > 0) {
-			if (l == decimals) if (decimals > 0) s[i++] = '.' ;
-			s[i++] = rS[--l] ; }
-		s[i++] = 0 ;
-		return s;  };
-		
-	int str2int(char* s) {
-		int32_t v = 0 ;
-		bool negativ = false ;
-		uint8_t i = 0 ;
-		uint8_t l = strlen(s) ;
-		if (s[0] =='-') {
-			negativ = true ;
-			i = i+1 ;}
-		while (i<l) {
-			v = v * 10 ;
-			v = v + s[i++] - '0' ; } 
-		return v ;} ;
-	int decimals ;
-  public :
-	cValueTranslator(int d) {decimals = d;} } ;
-
-
-class cMsgAdapter : public cMsgHandler, public cObserver {
-  protected:
-	cDevice * device ;
-	cTranslator * format ;
-  public:
-	cMsgAdapter(cTranslator* sf, const char* n, cDevice *d) : cMsgHandler(){
-		device = d;
-		device->addObserver(this);
-		strcpy(name, n);
-		format = sf ;}
-
-	void onEvent(int i, int c) {
-//		Serial.print("cMsgAdapter : onEvent  ");Serial.println(i);
-		cMsg* msg = newMsg() ;
-		if (msg != NULL) {
-			strcpy(msg->name, name) ;
-			format->int2str(msg->info, c) ;
-			writeMsg(msg) ; } }
-
-	void handleMsg(cMsg * msg) { device->doComand(format->str2int(msg->info)) ; } } ;
 
 typedef void (*cb_function)(int);
 
@@ -145,7 +50,9 @@ class cCallBackAdapter : public cObserver {
 		device->addObserver(this) ;}
 	void setCallBack(cb_function  f) {callBack = f ;}
 	void onEvent(int i, int c) {if(callBack != NULL)(*callBack)(c); } } ;
+
 //######################################################################
+
 class cButton : public cDevice, cLooper {
   private:
     int pin ;
@@ -159,7 +66,7 @@ class cButton : public cDevice, cLooper {
 		pin = p;
 		activeOn = ao ;
 		pinMode(pin, INPUT);
-		btnState = digitalRead(pin) ;
+//		btnState = digitalRead(pin) ;
 		indefinite = false ;
 		toogle() ; }
 		
@@ -172,21 +79,46 @@ class cButton : public cDevice, cLooper {
 			  indefinite = true ;
 			  bounceTime = millis() + 100 ; } } } } ;
 
-class cBtnFactory : public cFactory {
-  public:
-	cBtnFactory() {strcpy(name,"BTN");}
-	cButton* create(int p, bool ao, cb_function  f) {
-		cButton* d =new cButton(p, ao) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cButton* create(int p, bool ao, char*  n) {
-		cButton* d =new cButton(p, ao) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
-		return d ; }
-	cButton* create(int p, bool ao) { return new cButton(p, ao);} } ;
+cButton* newButton(int p, bool ao, cb_function  f) {
+	cButton* d =new cButton(p, ao) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
-cBtnFactory newButton;
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * 
+ *  Ein Potentiometer bzw. ein Spannungsmesser
+ *  Hier muss stehen welche Pins bei welchen MicroProzessoren verwendet werden kann
+ *  und welche Werte gesendet werden. Vieleicht wäre ein Wertebereich von 0 bis 100 gut
+ *
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+*/
+class cPoti : public cDevice, cLooper {
+  private:
+    int pin ;
+    int lastVal ;
+  public:
+    cPoti(int p ) {
+		pin = p;
+		int lastVal = 0 ;
+		Serial.println("");  //s.w. ohne diese Zeile lässt das Programm sich nicht für ESP8266 übersetzen!!! 
+		}
+		
+    
+    void onLoop() {
+      int val = analogRead(pin) ;
+      if (abs(lastVal - val) > 8) {
+		lastVal = val ;
+		setValue(lastVal) ; } }
+	} ;
+
+cPoti* newPoti(int p, cb_function  f) {
+	cPoti* d =new cPoti(p) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
 //######################################################################
+
 class cLatch : public cDevice, public cTimer {
   public:
     int setPin ;
@@ -228,21 +160,12 @@ class cLatch : public cDevice, public cTimer {
 			  toogle() ;
 			  break ; } } } ;
 
-class cLatchFactory : public cFactory {
-  public:
-	cLatchFactory() {strcpy(name,"LATCH");}
-	cLatch* create(int sp, int rp, cb_function  f) {
-		cLatch* d =new cLatch(sp, rp) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cLatch* create(int sp, int rp, char*  n) {
-		cLatch* d =new cLatch(sp, rp) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
-		return d ; }
-	cLatch* create(int sp, int rp) { return new cLatch(sp, rp);} } ;
+cLatch* newLatch(int sp, int rp, cb_function f) {
+	cLatch* d =new cLatch(sp, rp) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
-cLatchFactory newLatch;
-//######################################################################	
+
 class cRelais : public cDevice {
   public:
     int pin ;
@@ -280,21 +203,18 @@ class cRelais : public cDevice {
 	}
 } ;
 
-class cRelFactory : public cFactory {
-  public:
-	cRelFactory() {strcpy(name,"REL");}
-	cRelais* create(int p, bool ao, cb_function  f) {
-		cRelais* d =new cRelais(p, ao) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cRelais* create(int p, bool ao, char*  n) {
-		cRelais* d =new cRelais(p, ao) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
-		return d ; }
-	cRelais* create(int p, bool ao) { return new cRelais(p, ao);} } ;
+cRelais* newRelais(int p, bool ao, cb_function  f) {
+	cRelais* d =new cRelais(p, ao) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * 
+ *   LED
+ *   hier könnte stehen, wie die Konfiguration der StandardLed auf den
+ *   verscihedenen Boards aussieht
+ *
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-cRelFactory newRelais;
-//######################################################################
 class cLed : public cRelais, public cTimer {
   private:
     uint16_t interval ;
@@ -313,6 +233,7 @@ class cLed : public cRelais, public cTimer {
 			setTimer(interval); } }
 
     void doComand(int cmd) {
+//		Serial.println("onComand");
 		switch (cmd) {
 			case cmd_on :
 			  setOn() ;
@@ -326,59 +247,11 @@ class cLed : public cRelais, public cTimer {
 			case cmd_blink :
 			  setBlink() ;
 			  break ; } } } ;
-
-class cLedFactory : public cFactory {
-  public:
-	cLedFactory() {strcpy(name,"LED");}
-	cLed* create(int p, bool ao, cb_function  f) {
-		cLed* d =new cLed(p, ao) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cLed* create(int p, bool ao, char*  n) {
-		cLed* d =new cLed(p, ao) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cStateTranslator(), n, d);
-		return d ; }
-	cLed* create(int p, bool ao) { return new cLed(p, ao);} } ;
-
-cLedFactory newLed;
-/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- * 
- *  Ein Potentiometer bzw. ein Spannungsmesser
- *  Hier muss stehen welche Pins bei welchen MicroProzessoren verwendet werden kann
- *  und welche Werte gesendet werden. Vieleicht wäre ein Wertebereich von 0 bis 100 gut
- *
- * 
- * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
-class cPoti : public cDevice, cLooper {
-  protected:
-    int pin ;
-    int lastVal = 0 ;
-  public :
-  
-    cPoti(int p) {
-      pin = p ; };
-
-    void onLoop() {
-      int val = analogRead(pin) ;
-      if (abs(lastVal - val) > 8) {
-		lastVal = val ;
-		setValue(lastVal) ; } } } ;
-
-class cPotiFactory : public cFactory {
-  public:
-	cPotiFactory() {strcpy(name,"LED");}
-	cPoti* create(int p, cb_function  f) {
-		cPoti* d =new cPoti(p) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cPoti* create(int p, char*  n) {
-		cPoti* d =new cPoti(p) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cValueTranslator(0), n, d);
-		return d ; }
-	cPoti* create(int p) { return new cPoti(p);} } ;
-
-cPotiFactory newPoti;
+			  
+cLed* newLed(int p, bool ao, cb_function  f) {
+	cLed* d =new cLed(p, ao) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
@@ -420,21 +293,10 @@ class cClock : public cDevice, cTimer {
 			if(++hour > 23) hour = 0; }
 		setValue(hour*100 + min) ;} };
 
-
-class cClockFactory : public cFactory {
-  public:
-	cClockFactory() {strcpy(name,"Clock");}
-	cClock* create(cb_function  f) {
-		cClock* d =new cClock() ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cClock* create(const char*  n) {
-		cClock* d =new cClock() ;
-		cMsgAdapter* cb = new cMsgAdapter(new cValueTranslator(2), n, d);
-		return d ; }
-	cClock* create() { return new cClock();} } ;
-
-cClockFactory newClock;
+cClock* newClock(cb_function  f) {
+	cClock* d =new cClock() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
 #if defined(ESP8266)
 
@@ -463,21 +325,12 @@ class cHzMesser : public cDevice, cTimer {
 		ticks = 0 ;
 		setTimer(1) ; } };
 
+cHzMesser* newHzM(int p, cb_function  f) {
+	cHzMesser* d =new cHzMesser(p) ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
-class cHzMFactory : public cFactory {
-  public:
-	cHzMFactory() {strcpy(name,"HzM");}
-	cHzMesser* create(int p, cb_function  f) {
-		cHzMesser* d =new cHzMesser(p) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cHzMesser* create(int p, char*  n) {
-		cHzMesser* d =new cHzMesser(p) ;
-		cMsgAdapter* cb = new cMsgAdapter(new cValueTranslator(0), n, d);
-		return d ; }
-	cHzMesser* create(int p) { return new cHzMesser(p);} } ;
 
-cHzMFactory newHzM;
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
  *	VccSensor misst die anliegende Versorgungsspannung an einem ESP8266
@@ -498,22 +351,13 @@ class cVcc : public cIntervalSensor {
 		f = (f + f/10) / 10 ;
 		setValue(f); } } ;
 
-class cVccFactory : public cFactory {
-  public:
-	cVccFactory() {strcpy(name,"Vcc");}
-	cVcc* create() { return new cVcc();}
-	cVcc* create(cb_function  f) {
-		cVcc* d = create() ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cVcc* create(char*  n) {
-		cVcc* d = create() ;
-		cMsgAdapter* cb = new cMsgAdapter(new cValueTranslator(2), n, d);
-		return d ; } } ;
-
-cVccFactory newVcc;
+cVcc* newVcc(cb_function  f) {
+	cVcc* d =new cVcc() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
 #endif
+
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
  *  Ein Ultraschallsensor, der den Abstand zwischen Sensor und z.B. einer Flüssigkeitsoberfläche misst.
@@ -522,6 +366,7 @@ cVccFactory newVcc;
  *
  * 
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
 class cUltraSonicSensor : public cIntervalSensor {
   private :
     int triggerPin ;
@@ -544,20 +389,10 @@ class cUltraSonicSensor : public cIntervalSensor {
 		int distance = (duration / 2) / 29.1;
 		setValue(distance); } } ;
 
-class cUltraSonicFactory : public cFactory {
-  public:
-	cUltraSonicFactory() {strcpy(name,"USS");}
-	cUltraSonicSensor* create(int t, int e) { return new cUltraSonicSensor(t, e);}
-	cUltraSonicSensor* create(int t, int e, cb_function  f) {
-		cUltraSonicSensor* d = create(t, e) ;
-		cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-		return d ; }
-	cUltraSonicSensor* create(int t, int e, char*  n) {
-		cUltraSonicSensor* d = create(t, e) ;
-		cMsgAdapter* ma = new cMsgAdapter(new cValueTranslator(0), n, d);
-		return d ; } } ;
-
-cUltraSonicFactory newUSS;
+cUltraSonicSensor* newUSS(int t, int e, cb_function  f) {
+	cUltraSonicSensor* d =new cUltraSonicSensor(t, e); ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
 
 #endif
 

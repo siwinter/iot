@@ -1,12 +1,12 @@
 #ifndef CCHANNEL_H
 #define CCHANNEL_H
-
+/*
 #include "cCore.h"
 
 // : inf/systemname/devicename
 // : cmd/th1/rel1
 
-class cSerialChannel : public cChannel, cLooper {
+class cOldSerialChannel : public cOldChannel, cLooper {
   private :
     bool receiving = false ;
     int msgIndex ;
@@ -15,7 +15,7 @@ class cSerialChannel : public cChannel, cLooper {
     cMsg * msg ;
   public:
 	bool active ;
-	cSerialChannel() { 
+	cOldSerialChannel() { 
 		Serial.begin(115200); 
 		initTopic();} 	
 	
@@ -56,5 +56,5 @@ class cSerialChannel : public cChannel, cLooper {
 		Serial.print(":");
 		Serial.println(msg->info);
 		return true ;} } ;
-
+*/
 #endif

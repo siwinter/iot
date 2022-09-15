@@ -8,7 +8,7 @@
  *       #include "cDHT.h"
  *       #include "cMqtt.h"
  * 
- *       void setup() { newDHT22.create(4,"_1") ; }  // Pin 4 ist D02 beim ESP8266
+ *       void setup() { newDHT22(4,"_1") ; }  // Pin 4 ist D02 beim ESP8266
  *       void loop() { systemLoop(); }
  * 
  * */
@@ -618,7 +618,7 @@ class cDHT22 : public cIntervalSensor {
 	cDHT22(int p) {
 		pin = p ;
 		setInterval(10) ; 
-		dht.setup(pin, DHTesp::DHT22); } // Connect DHT sensor to GPIO 17;
+		dht.setup(pin, DHTesp::DHT22); }
 	void measure() {
 		humid.setValue((int)dht.getHumidity()) ;
 		temp.setValue((int)(dht.getTemperature()*10)) ; }
@@ -626,8 +626,19 @@ class cDHT22 : public cIntervalSensor {
 	cDevice * getTemperatureSensor() {return &temp ; }
 	cDevice * getHumiditySensor() {return &humid ; } };
 
+
+cDHT22* newDHT22(int p, cb_function  fTmp, cb_function  fHum) {
+	cDHT22* d =new cDHT22(p) ;	
+	new cCallBackAdapter(fTmp, d->getTemperatureSensor()) ;
+	new cCallBackAdapter(fHum, d->getHumiditySensor()) ;
+	return d ; }
+
+
+
 //######################################### Factory #########################################
 
+
+/*
 class cDHT22Factory : public cFactory {
   public:
 	cDHT22Factory() {strcpy(name,"DHT22");}
@@ -649,5 +660,5 @@ class cDHT22Factory : public cFactory {
 		return d ; } } ;
 
 cDHT22Factory newDHT22;
-
+*/
 #endif

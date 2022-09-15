@@ -14,7 +14,7 @@
 #include "cDevice.h"
 #include "cMqtt.h"
 
-void setup() { newLed.create(2, false, "LED") ; }
+void setup() { newLed(2, false, "LED") ; }
 void loop() { systemLoop(); }
 
 */
