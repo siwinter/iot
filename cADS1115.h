@@ -4,6 +4,8 @@
 
 /* ****************************************************************************************
  * 
+ * Der ADS115 ist ein 4-Kanal AnalogDigitalWandler.
+ * Jeder einzelne Kanal wird als eigenständiges (Sensor-)Device betrachtet.
  * Die Datei beruht auf Version 0.3.4 der Library ADS1x15.
  * (s. https://www.arduino.cc/reference/en/libraries/ads1x15/)
  * 
@@ -960,16 +962,16 @@ class cADS1115Factory : public cFactory {
 	cADS1115* create(int s, int i, char*  n) {
 		cADS1115* d = create(s, i);
 		char txt[20] ;
-		strcpy(txt, "sensor1");
+		strcpy(txt, "_1");
 		strcat(txt, n) ;
 		new cMsgAdapter(new cValueTranslator(2),txt,d->getSensor(0)) ;
-		strcpy(txt, "sensor2");
+		strcpy(txt, "_2");
 		strcat(txt, n) ;
 		new cMsgAdapter(new cValueTranslator(2),txt,d->getSensor(1)) ;
-		strcpy(txt, "sensor3");
+		strcpy(txt, "_3");
 		strcat(txt, n) ;
 		new cMsgAdapter(new cValueTranslator(2),txt,d->getSensor(2)) ;
-		strcpy(txt, "sensor4");
+		strcpy(txt, "_4");
 		strcat(txt, n) ;
 		new cMsgAdapter(new cValueTranslator(2),txt,d->getSensor(3)) ;
 		return d ; }

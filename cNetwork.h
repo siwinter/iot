@@ -110,8 +110,7 @@ class cScheduler : public cObserver {
 	
 	void insertChannel(cChannel* c) {
 		channelEvent = c->addObserver(this);
-		upStreamChannel = c ;
-	}
+		upStreamChannel = c ; }
 	
 	void onEvent(int i, int e) {
 //		Serial.print("theNetwork onEvent: ");
@@ -152,7 +151,7 @@ class cScheduler : public cObserver {
 	void sendEvent(char* name, char* info) {
 		strcpy(devName, "/");
 		strcat(devName, name);
-		upStreamChannel->sendMsg(evtTopic, info);
+		if( upStreamChannel != NULL) upStreamChannel->sendMsg(evtTopic, info);
 		strcpy(devName,""); } };
 
 cScheduler theScheduler ;

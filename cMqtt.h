@@ -51,6 +51,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		dbEvent = theDataBase.addObserver(this) ;
 		wifiEvent =theWifi.addObserver(this);
 		getMAC() ;
+//		theScheduler.insertChannel(this) ;
 		if (getBrokerID()) reconnect(); }
 		
 	int dbEvent ;
@@ -74,14 +75,17 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			setTimer(5);
 			return false ; }
 		return true ; }
-		
-	void sendMsg(char* topic, char* info) { client. publish(topic, info); }
+
+	void sendMsg(char* topic, char* info) { 
+		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
+		client. publish(topic, info); }
 	
 	bool sendComand(char* topic, char* info) {return false ; }
 
 	void subscribe(char* topic) {   // sbs/cmd/nodename/#
+		Serial.print("cMqtt.subscribe: "); Serial.println(topic+4);
 		client.subscribe(topic+4) ;}
-	
+
 	void onTimeout() { reconnect() ; }
 
 	void onLoop() { client.loop() ; }
@@ -93,6 +97,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 	strcpy(theMqtt.topic, topic) ;
 	strncpy(theMqtt.info, (char*)payload,length) ;
 	theMqtt.info[length] = 0 ;
+	Serial.print("cMqtt.received: "); Serial.print(theMqtt.topic); Serial.print(" "); Serial.println(theMqtt.info);
 	theMqtt.received() ; }
 
 

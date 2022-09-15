@@ -24,7 +24,8 @@ class cIntervalSensor : public cDevice, public cTimer {
 	virtual void measure() = 0 ;
 	void setInterval(uint16_t i) {
 		interval = i ;
-		setMillis(random(interval * 1000)) ; }
+		int h = random(interval * 1000) ;
+		setMillis(h) ; }
 	void onTimeout() {
 		measure() ;
 		setTimer(interval); } } ;
@@ -96,14 +97,11 @@ class cPoti : public cDevice, cLooper {
   private:
     int pin ;
     int lastVal ;
-//    void toogle() { if (btnState == activeOn) setValue(val_on); else setValue(val_off) ; }
   public:
     cPoti(int p ) {
 		pin = p;
 		int lastVal = 0 ;
-		analogRead(pin) ;
-//		digitalWrite(pin,true);
-//		digitalRead(pin) ;
+		Serial.println("");  //s.w. ohne diese Zeile lässt das Programm sich nicht für ESP8266 übersetzen!!! 
 		}
 		
     
@@ -235,6 +233,7 @@ class cLed : public cRelais, public cTimer {
 			setTimer(interval); } }
 
     void doComand(int cmd) {
+//		Serial.println("onComand");
 		switch (cmd) {
 			case cmd_on :
 			  setOn() ;

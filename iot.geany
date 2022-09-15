@@ -19,7 +19,7 @@ indent_mode=2
 
 [project]
 name=iot
-base_path=/home/swinter/Schreibtisch/projekt/iot/
+base_path=/home/swinter/Schreibtisch/pr/iot/
 description=
 
 [long line marker]
@@ -28,7 +28,6 @@ long_line_column=72
 
 [files]
 current_page=0
-FILE_NAME_0=0;Arduino;0;EUTF-8;1;1;0;%2Fhome%2Fswinter%2FSchreibtisch%2Fprojekt%2Fiot%2Fiot.ino;0;4
 
 [VTE]
 last_dir=/home/swinter

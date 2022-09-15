@@ -95,7 +95,8 @@ cClock* newClock(char* n) {
 	cClock* d =new cClock() ;
 	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(2), d, n));
 	return d ; }
-
+	
+#if defined(ESP8266)
 cHzMesser* newHzM(int p, char* n) {
 	cHzMesser* d =new cHzMesser(p) ;
 	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(0), d, n));
@@ -105,19 +106,38 @@ cVcc* newVcc(char* n) {
 	cVcc* d = new cVcc() ;
 	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(2), d, n));
 	return d ; }
+#endif
 
 cUltraSonicSensor* newUSS(int t, int e, char* n) {
 	cUltraSonicSensor* d =new cUltraSonicSensor(t, e);
 	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(0), d, n));
 	return d ; }
-/*	
-cPoti* newPoti(int p, char* n) {
-	cPoti* d =new cPoti(p) ;
+
+#include "cDHT.h"
+
+cDHT22* newDHT22(int p, char* n) {
+	cDHT22* d =new cDHT22(p) ;
+	char txt[20] ;
+	strcpy(txt, "tmp");
+	strcat(txt, n) ;
+	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt)) ;
+	strcpy(txt, "hum");
+	strcat(txt, n) ;
+	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(0),d->getHumiditySensor(), txt)) ;
 	return d ;}
 
-cPoti* newPoti(int p, char*  n) {
-	cPoti* d =new cPoti(p) ;
-	theScheduler.addDevice( new cTxtAdapter(new cStateTranslator(), d, n));
+#include "cBME280.h"
+cBME280* newBME280(char* n) {
+	cBME280* d =new cBME280() ;
+	char txt[20] ;
+	strcpy(txt, "tmp");
+	strcat(txt, n) ;
+	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt)) ;
+	strcpy(txt, "hum");
+	strcat(txt, n) ;
+	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getHumiditySensor(), txt)) ;
+	strcpy(txt, "prs");
+	strcat(txt, n) ;
+	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getPressureSensor(), txt)) ;
 	return d ; }
-*/
 #endif

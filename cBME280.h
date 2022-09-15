@@ -1,6 +1,6 @@
 /*  Basiert auf Version 3.0.0 der BME280 sensor library for ESPx (.s https://www.arduino.cc/reference/en/libraries/bme280/)
  *  sollte zu allen Prozessoren kompatibel sein 
- *   nutzt I2C nicht SPI 
+ *  nutzt I2C nicht SPI 
  * 
  *   Vin (Voltage In)    ->  3.3V
  *   Gnd (Ground)        ->  Gnd
@@ -12,7 +12,7 @@
 #ifndef BME280_h
 #define BME280_h
 #include <Wire.h>
-class cBME280Sensor : public cIntervalSensor {
+class cBME280 : public cIntervalSensor {
 public:
 
 /*****************************************************************/
@@ -297,6 +297,7 @@ public:
 		return final; }
 
 	void read ( float& pressure, float& temp, float& humidity ) {
+		Serial.print("cBME280.read: ");
 		int32_t data[8];
 		int32_t t_fine;
 		if(!ReadData(data)){
@@ -307,10 +308,13 @@ public:
 		uint32_t rawHumidity = (data[6] << 8) | data[7];
 		temp = CalculateTemperature(rawTemp, t_fine );
 		pressure = CalculatePressure(rawPressure, t_fine );
-		humidity = CalculateHumidity(rawHumidity, t_fine); }
+		humidity = CalculateHumidity(rawHumidity, t_fine);
+		Serial.println(humidity);
+		}
 
   public:
-	cBME280Sensor() {
+	cBME280() {
+		Serial.println("cBME280");
 		m_settings.tempOSR = OSR_X1 ;
 		m_settings.humOSR  = OSR_X1 ;
 		m_settings.presOSR = OSR_X1 ;
@@ -322,8 +326,12 @@ public:
 		setInterval(10);
 	}
 	bool begin() {
+		
+		Serial.println("cBME280.begin");
 		bool success = ReadChipID();
 		if(success) {
+			
+		Serial.println("Readchip success");
 			success &= ReadTrim();
 			if(m_settings.filter != Filter_Off) { InitializeFilter(); }
 			WriteSettings(); }
@@ -331,13 +339,25 @@ public:
 		return m_initialized; }
 		
 	void measure() {
+		Serial.println("cBME280.measure");
 		float temp(NAN), hum(NAN), pres(NAN);		
 		read(pres, temp, hum); }
+		
 	cDevice * getTemperatureSensor() {return &temp ; }
 	cDevice * getHumiditySensor() {return &humid ; }
 	cDevice * getPressureSensor() {return &press ; }
 } ;
 
+cBME280* newBME280(cb_function  fTmp, cb_function  fHum, cb_function fPrs) {
+	cBME280* d =new cBME280() ;	
+	new cCallBackAdapter(fTmp, d->getTemperatureSensor()) ;
+	new cCallBackAdapter(fHum, d->getHumiditySensor()) ;
+	new cCallBackAdapter(fPrs, d->getPressureSensor()) ;
+	return d ; }
+
+
+
+/*
 class cBME280Factory : public cFactory {
   public:
 	cBME280Factory() {strcpy(name,"BME280");}
@@ -363,6 +383,5 @@ class cBME280Factory : public cFactory {
 		return d ; } } ;
 
 cBME280Factory newBME280 ;
-
-
+*/
 #endif

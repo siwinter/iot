@@ -1,3 +1,4 @@
+
 /*
 ########################################################################
 ########################################################################
@@ -10,14 +11,15 @@
 
 
 #include "cNetwork.h"
+*/
+
 #include "cMqtt.h"
 
 void setup() {
 //	Serial.begin(115200);
-//	Serial.println("start");
 	theScheduler.insertChannel(&theMqtt) ;
-	newVcc("Vcc") ;
+//	newDHT22(4,"Wohnz") ;
+//	newBME280("Wohnz") ;
 	newLed(2, false, "LED"); }
 
 void loop() { systemLoop(); }
-*/
