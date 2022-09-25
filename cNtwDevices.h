@@ -68,49 +68,49 @@ class cValueTranslator : public cTranslator {
 
 cButton* newButton(int p, bool ao, char*  n) {
 	cButton* d =new cButton(p, ao) ;
-	theScheduler.addDevice( new cTxtAdapter(new cStateTranslator(), d, n));
+	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 	
 cPoti* newPoti(int p, char* n) {
 	cPoti* d =new cPoti(p) ;
-	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(0), d, n));
+	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ;}
 
 cLatch* newLatch(int sp, int rp,  char*  n) {
 	cLatch* d =new cLatch(sp, rp) ;
-	theScheduler.addDevice( new cTxtAdapter(new cStateTranslator(), d, n));
+	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
 cRelais* newRelais(int p, bool ao, char*  n) {
 	cRelais* d =new cRelais(p, ao) ;
-	theScheduler.addDevice( new cTxtAdapter(new cStateTranslator(), d, n));
+	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
 cLed* newLed(int p, bool ao, char*  n) {
 	cLed* d =new cLed(p, ao) ;
-	theScheduler.addDevice( new cTxtAdapter(new cStateTranslator(), d, n));
+	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
 cClock* newClock(char* n) {
 	cClock* d =new cClock() ;
-	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(2), d, n));
+	new cTxtAdapter(new cValueTranslator(2), d, n);
 	return d ; }
 	
 #if defined(ESP8266)
 cHzMesser* newHzM(int p, char* n) {
 	cHzMesser* d =new cHzMesser(p) ;
-	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(0), d, n));
+	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 
 cVcc* newVcc(char* n) {
 	cVcc* d = new cVcc() ;
-	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(2), d, n));
+	new cTxtAdapter(new cValueTranslator(2), d, n);
 	return d ; }
 #endif
 
 cUltraSonicSensor* newUSS(int t, int e, char* n) {
 	cUltraSonicSensor* d =new cUltraSonicSensor(t, e);
-	theScheduler.addDevice( new cTxtAdapter(new cValueTranslator(0), d, n));
+	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 
 #include "cDHT.h"
@@ -120,10 +120,10 @@ cDHT22* newDHT22(int p, char* n) {
 	char txt[20] ;
 	strcpy(txt, "tmp");
 	strcat(txt, n) ;
-	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt)) ;
+	new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt) ;
 	strcpy(txt, "hum");
 	strcat(txt, n) ;
-	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(0),d->getHumiditySensor(), txt)) ;
+	new cTxtAdapter(new cValueTranslator(0),d->getHumiditySensor(), txt) ;
 	return d ;}
 
 #include "cBME280.h"
@@ -132,12 +132,12 @@ cBME280* newBME280(char* n) {
 	char txt[20] ;
 	strcpy(txt, "tmp");
 	strcat(txt, n) ;
-	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt)) ;
+	new cTxtAdapter(new cValueTranslator(1),d->getTemperatureSensor(), txt) ;
 	strcpy(txt, "hum");
 	strcat(txt, n) ;
-	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getHumiditySensor(), txt)) ;
+	new cTxtAdapter(new cValueTranslator(1),d->getHumiditySensor(), txt) ;
 	strcpy(txt, "prs");
 	strcat(txt, n) ;
-	theScheduler.addDevice(new cTxtAdapter(new cValueTranslator(1),d->getPressureSensor(), txt)) ;
+	new cTxtAdapter(new cValueTranslator(1),d->getPressureSensor(), txt) ;
 	return d ; }
 #endif

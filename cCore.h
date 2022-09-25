@@ -3,9 +3,6 @@
 
 #include <Arduino.h>
 
-uint8_t version = 2 ;
-const char * txtVersion = "0.0.2" ;
-
 #define cmd_off    0
 #define cmd_on     1
 #define cmd_toogle 2
@@ -18,158 +15,170 @@ const char * txtVersion = "0.0.2" ;
 #define val_connected 	 4
 #define val_wifiAP 		12
 
+template < typename T >
+class tLink {
+  public:
+	T* element ;
+	tLink* next ;};
 
+template <typename Tl, typename Te>	//Tl = Link, Te = Element
+class tList {
+  private :
+	Tl* anchor;
+	Tl* index ;
+	Tl* emptyChain ;
+	
+	Tl * newLink() {
+		if (emptyChain == NULL ) return new Tl() ;
+		else {
+			Tl* r = emptyChain ;
+			emptyChain = r->next ;
+			return r ; } }
+			
+	void returnLink(Tl* l) {
+		l->next = emptyChain ;
+		emptyChain = l ; }
+
+  public:
+  
+	tList() {
+		anchor = NULL ;
+		index = NULL ;
+		emptyChain = NULL ;}
+		
+	void insert(Te* e, Tl* l = NULL) {
+		Tl* nl = newLink() ;
+		nl->element = e ;
+		if (l == NULL) {
+			nl->next = anchor ;
+			anchor = nl ; }
+		else {
+			nl->next = l->next ;
+			l->next = nl ; }}
+	
+	Te* getNext(Te* e) {
+		if (e == NULL) index = anchor ;
+		if (index == NULL) return NULL;
+		Te* re = index->element ;
+		index = index->next ;
+		return re ; }
+			
+	Tl* getNextLink(Tl* l) {
+		if (l == NULL ) return anchor ;
+		return l->next ; }
+		
+	void deleteElement(Te* e) {
+		Tl* l = anchor ;
+		Tl* vl = NULL ;
+		while (l != NULL) {
+			if (l->element == e) {
+				if (vl == NULL) anchor = l->next ;
+				else vl->next = l->next ;
+				returnLink(l) ;
+				break ; }
+			vl = l ;
+			l = l->next; } }
+};
+
+// tList<tLink<int>, int> * eineListe ;
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 class cLooper ;
-cLooper * aLooper ;
-
+tList<tLink<cLooper>, cLooper>  theLoopers ;
 class cLooper {
   public:
-	cLooper * nextL ;
-	cLooper() {
-		nextL = aLooper ;
-		aLooper = this ; }
+	cLooper() { theLoopers.insert(this); }
     virtual void onLoop() = 0; } ;
 
-void systemLoop() {
-	cLooper * l = aLooper;
-		while (l != NULL) { l->onLoop() ; l= l->nextL; } }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 class cTimer ;
-cTimer * aTimer ;
-void printTimers() ;
+tList<tLink<cTimer>, cTimer>  theTimers ;
+
 class cTimer {
   public:
-    cTimer * nextT = NULL;
-    unsigned long timeToExpire ;
-    void resetTimer() {
-//		Serial.println("cTimer:resetTimer");
-//		printTimers();
-		if ( aTimer == this ) aTimer = aTimer->nextT ;
-		else {
-			cTimer * t = aTimer ;
-			while (t != NULL) {
-			if (t->nextT == this) {
-				t->nextT = nextT ;
-				break; }
-			t = t->nextT ; } }
-		timeToExpire = 0 ;
-		nextT = NULL; }
-    void insert() {
-		cTimer ** pTimer = &aTimer ;
-		while (*pTimer != NULL) {
-			if (timeToExpire < (*pTimer)->timeToExpire) {
-				nextT = (*pTimer) ;
-				*pTimer = this ;
-				return ; }
-			pTimer = &(*pTimer)->nextT ; }
-		*pTimer = this ;
-		nextT = NULL ; }
-    void setTimer(int t) {
-//		Serial.println("cTimer:setTimer");
-		if (timeToExpire != 0) resetTimer() ;
-		timeToExpire = millis() + (t *1000) ;
-		insert() ;}
-    void setMillis(int t) {
-//		Serial.println("cTimer:setMillis");
-		if (timeToExpire != 0) resetTimer() ;
-		timeToExpire = millis() + t ;
-		insert() ;};	
-    virtual void onTimeout() = 0 ; } ;
+	unsigned long timeToExpire ;
+	virtual void onTimeout() = 0 ; 
 
-void printTimers() {
-	Serial.print("number of timers; ") ;
-	int tims = 1 ;
-	if (aTimer == NULL) Serial.println(0) ;
-	else {
-		cTimer* lT = aTimer;
-		while ( lT->nextT != NULL ) {
-			lT = lT->nextT;
-			tims = tims + 1 ;
-		}
-	Serial.println(tims); } }
+	cTimer() {timeToExpire = 0 ;}
+
+	void resetTimer() { 
+		timeToExpire = 0 ;
+		theTimers.deleteElement(this); }
+
+	void setTimer(int t) {
+		if (timeToExpire != 0) resetTimer() ;
+		timeToExpire = millis() + t*1000;
+		insertTimer() ;}
+
+	void setMillis(int t) {
+		if (timeToExpire != 0) resetTimer() ;
+		timeToExpire = millis() + t;
+		insertTimer() ;}
+
+	void insertTimer() {
+		tLink<cTimer>* actualLink = theTimers.getNextLink(NULL);
+		tLink<cTimer>* lastLink = NULL;
+		while(actualLink != 0) {
+			if  (actualLink->element->timeToExpire > timeToExpire) break;
+			lastLink = actualLink;
+			actualLink = theTimers.getNextLink(lastLink) ; }
+		theTimers.insert(this, lastLink) ; } };
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 class cObserver {
   public:
 	cObserver() {} ;
     virtual void onEvent(int i, int evt)=0; } ;
 
-class cObserverLink {
-  public :
-	cObserver * item ;
-	cObserverLink * nextLink ; 
-	cObserverLink(cObserver* i) {item = i ;}};
-
 class cObserved {
   private :
 	int index ;
   public :
-	cObserverLink * aObserver ;
-	static int oNumber ;
-	cObserved() : aObserver(NULL) {
+
+	tList<tLink<cObserver>, cObserver>  theObservers ;
+	static int oNumber ;			// statisch für alle Objekte (Objektzähler)
+	cObserved() {
 		oNumber = oNumber++ ;
 		index = oNumber ; };
 	cObserved(cObserver * o) : cObserved() {addObserver(o);}
 	int addObserver(cObserver * o){
-		if (o != NULL) {
-			cObserverLink* n = new cObserverLink(o) ;
-			n->nextLink = aObserver ;
-			aObserver = n ; }
+		theObservers.insert(o);
 		return index ; }
 		
 	int getIndex() {return index ;}
 
 	void fireEvent(int c) {
-		cObserverLink* o = aObserver;
-		int i = 0 ;
-		while (o != NULL){o->item->onEvent(index, c); o = o->nextLink; } } };
-int  cObserved :: oNumber = 0 ;
+		cObserver * o = theObservers.getNext(NULL);
+		while (o != NULL) {
+			o->onEvent(index,c) ;
+			o = theObservers.getNext(o);
+		} } };
+			
+int  cObserved :: oNumber = 0 ;	// Initialisisierung des Objektzählers
 
-class cCore : public cLooper {
-  public:
-
-	cCore() { aTimer = NULL ;}
-				
-	void onLoop() {
-		// treat timers
-		if (aTimer != NULL) {
-			if (millis() >= aTimer->timeToExpire) {
-//				Serial.println("cCore:timer expire");
-				cTimer * t = aTimer ;
-				aTimer = t->nextT ;
-				t->timeToExpire = 0 ;
-//				printTimers() ;
-				t->onTimeout() ; } } } } ;
-
-cCore theCore;
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-/*
-class cFactory ;
-cFactory * aFactory;
 
-class cFactory {
-  public:
-	char name[6];
-	cFactory* nextFac;
-	cFactory() {nextFac =  NULL; regFactory(); }
-    void regFactory() {
-		nextFac = aFactory ;
-		aFactory = this ; } 
-	virtual bool make() {return false  ; } } ;
-
-class cCreator : public cMsgHandler {
-	void onTest(cMsg* msg) {
-		cFactory* f = aFactory ;
-		while( f != NULL ) {f->make(); f = f->nextFac; } }
-	void handleMsg(cMsg * msg) {
-		Serial.println("cCreator : handleMsg");
-		cFactory* getFirstFactory(); } } ;
-
-cCreator Creator;
-*/
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+void systemLoop() {
+	cLooper* l = theLoopers.getNext(NULL) ;
+	while ( l != NULL) {
+		l->onLoop();
+		l = theLoopers.getNext(l) ; }
+	cTimer*t = theTimers.getNext(NULL);
+	if (t!= NULL) {
+		if (millis() < t->timeToExpire ) return ;
+		t->resetTimer();
+		t->onTimeout(); } }
 class cSetup ;
 cSetup * aSetup;
+
+class cConfig ;
+tList<tLink<cConfig>, cConfig>  theConfigs ;
+
+class cConfig {
+  public:
+	cConfig() { theConfigs.insert(this); }
+	virtual bool configure(char* key, char* value) {return false;}
+} ;
 
 class cSetup {
   public:

@@ -65,15 +65,18 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			if (evt == val_on) reconnect() ; } } 
 		
 	bool reconnect() {
-//		Serial.println("mqtt reconnect");
+		Serial.println("mqtt reconnect");
 		if (!client.connected()) {
+			Serial.println("mqtt 1");
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
-//				Serial.println("mqtt connected");
+				Serial.println("mqtt connected");
 				fireEvent(val_connected) ;
 				return true ;}
+			Serial.println("mqtt 2");
 			setTimer(5);
 			return false ; }
+		Serial.println("mqtt 3");
 		return true ; }
 
 	void sendMsg(char* topic, char* info) { 
@@ -169,7 +172,8 @@ class cMqttWebsite : public cWebElement {
 			if (argsOkay) newBroker(byteIP, port);}
 		if (getArgument("node", txt, 16)) {
 //			Serial.print("handleElement node: ");Serial.println(txt); 
-			theScheduler.newNodeName(txt);}
+//			theScheduler.newNodeName(txt);
+			}
 		send(htmlMqtt);
 		return false; }
 } ; 
