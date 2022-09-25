@@ -18,6 +18,7 @@
 #include <EEPROM.h>
 class cDatabase : public cObserved, public cTimer {
   private:
+	int nextAdr = 0 ; 
 	int lastAdr ;
 	bool checkEEPROM() {
 		if ((EEPROM.read(0) != 'I') || (EEPROM.read(1) != 'o') || ( EEPROM.read(2) != 'T')) return false ;
@@ -52,16 +53,39 @@ class cDatabase : public cObserved, public cTimer {
 		setMillis(1) ;}
 	
 	void onTimeout(){
+		if ( nextAdr == 0) {
 #if defined(ESP8266)
-		EEPROM.begin(EEPROMsize) ;
+			EEPROM.begin(EEPROMsize) ;
 #else
-		if(!EEPROM.begin(EEPROMsize)) {
-			setMillis(5);
-			return; }
+			if(!EEPROM.begin(EEPROMsize)) {
+				setMillis(5);
+				return; }
 #endif
-		if ( !checkEEPROM()) formatEEPROM() ;
-//		Serial.println("cDatabase fireEvent");
-		fireEvent(val_on);}
+			if ( !checkEEPROM()) formatEEPROM() ;
+//			Serial.println("cDatabase fireEvent");
+			fireEvent(val_on);
+			nextAdr = 3;
+			setMillis(1) ;
+			return ;}
+//		delay (1000);
+		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
+		char key[30] ;
+		char value[30] ;
+		int len = EEPROM.read(nextAdr++);
+		if ( len == 0 ) return ;
+		int i; for (i=0; i<len; i++) key[i] = EEPROM.read(nextAdr++) ;
+		key[i] = 0;
+		len = EEPROM.read(nextAdr++);
+		i; for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
+		value[i] = 0;
+		Serial.print("cDatabase key: "); Serial.println(key);
+		cConfig* c = theConfigs.getNext(NULL);
+		while ( c != NULL) {
+			Serial.println("cDatabase 1"); 
+			if ( c->configure(key, value) ) break ;
+			c = theConfigs.getNext(c); }
+		Serial.println("cDatabase 2");
+		setMillis(1) ; }
 	
 	void deleteData(char* key) {
 		int adr = findKey(key, 3) ;
