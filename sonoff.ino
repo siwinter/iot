@@ -7,7 +7,8 @@
  * 
  * Beachte die unterschiedlich create-Funktionen für die Devices und ggf. das nachträgliche Hinzufügen der Callback-Funktion! 
  */
-/*
+ /*
+#include "cDevice.h"
 #include "cMqtt.h"
 
 cLed* theLed ;
