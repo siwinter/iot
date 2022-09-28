@@ -19,18 +19,16 @@ char* theNodeName = theEvtTopic + 4;
 
 class cNodeName : public cConfig {
   public :
-	bool configure(char* key, char* value) {
-		Serial.print("cNodeName key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
+	bool configure(char* key, char* value, int vLen) {
+//		Serial.print("cNodeName key: "); Serial.print(key); Serial.print(" value: "); Serial.print(value) ;
 		if (strcmp(key, "node") == 0) {
 			strcpy(theNodeName,value);
 			strcat(theNodeName,"/");
 			return true ; }
-		return false ; }
-} ;
+		return false ; } } ;
 
 cNodeName theNode ;
-
-void changeTopicName(char* t) { theNode.configure("node", t); }
+void changeTopicName(char* t) { theNode.configure("node", t, strlen(t)); }
 
 //##################################### cTxtAdapter ###################################### 
 class cTranslator {
@@ -62,7 +60,6 @@ class cTxtAdapter : public cObserver {
 		return true ;} };
 
 //####################################### cChannel ########################################
-
 class cNode {
   public:
 	cNode(char* n) {
@@ -107,10 +104,15 @@ class cChannel : public cObserved {
 			sendMsg(topic, info) ;
 			return true ; }
 		return false ;}
-	virtual void subscribe(char* topic)  = 0 ;
+	virtual void subscribe(char* topic)  = 0 ;  // topic = cmd/nodename/#
 	void received() ;			
-	void connected() { fireEvent(val_connected) ; } };
-
+	void connected() {
+		char sbs[cTopicLen] ;
+		strcpy(sbs, "cmd/");
+		strcat(sbs, theNodeName); 
+		strcat(sbs, "#"); 
+		subscribe(sbs);
+		fireEvent(val_connected) ; } };
 
 void cChannel :: received() {
 		if ((topic[0]=='e')&&(topic[1]=='v')&&(topic[2]=='t')&&(topic[3]=='/')) { // topic; evt/nodeName/deviceName
@@ -131,7 +133,7 @@ void cChannel :: received() {
 					channel = theChannels.getNext(channel) ; } }
 			return;}
 		if ((topic[0]=='s')&&(topic[1]=='b')&&(topic[2]=='s')&&(topic[3]=='/')) { // topic: sbs/nodeName/#
-			theChannels.getNext(NULL)->subscribe(topic) ;
+			theChannels.getNext(NULL)->subscribe(topic + 4) ;
 			storeNodeName(topic + 4) ;
 			return ; } }
 
@@ -141,7 +143,6 @@ void cTxtAdapter :: onEvent(int i, int c) {
 	theChannels.getNext(NULL)->sendEvent(deviceName, info); }
 
 //################################### cSerialChannel #####################################
-
 class cSerialChannel : public cChannel, cLooper {
   private :
     bool receiving = false ;
@@ -191,9 +192,7 @@ class cSerialChannel : public cChannel, cLooper {
 		Serial.print(":");
 		Serial.println(info); } } ;
 		
- cSerialChannel theSerial ;
-
+cSerialChannel theSerial ;
 #include "cNtwDevices.h"
 
 #endif
-

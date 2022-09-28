@@ -2,6 +2,10 @@
 #define DATABASE_h
 
 #include "cCore.h"
+#ifdef ARDUINO_AVR_LARDU_328E
+
+#else	
+
 #include <EEPROM.h>
 /*
  * ToDos:
@@ -16,7 +20,7 @@
 #define EEPROMsize 512
 
 #include <EEPROM.h>
-class cDatabase : public cObserved, public cTimer {
+class cDatabase : public cTimer, public cConfigurator {
   private:
 	int nextAdr = 0 ; 
 	int lastAdr ;
@@ -49,7 +53,7 @@ class cDatabase : public cObserved, public cTimer {
 		return 0 ; }
 
   public:
-	cDatabase() { 
+	cDatabase() { theConfigurator = this ;
 		setMillis(1) ;}
 	
 	void onTimeout(){
@@ -62,13 +66,11 @@ class cDatabase : public cObserved, public cTimer {
 				return; }
 #endif
 			if ( !checkEEPROM()) formatEEPROM() ;
-//			Serial.println("cDatabase fireEvent");
-			fireEvent(val_on);
 			nextAdr = 3;
 			setMillis(1) ;
 			return ;}
-//		delay (1000);
-		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
+		delay (100);
+//		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
 		char key[30] ;
 		char value[30] ;
 		int len = EEPROM.read(nextAdr++);
@@ -78,13 +80,8 @@ class cDatabase : public cObserved, public cTimer {
 		len = EEPROM.read(nextAdr++);
 		i; for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
 		value[i] = 0;
-		Serial.print("cDatabase key: "); Serial.println(key);
-		cConfig* c = theConfigs.getNext(NULL);
-		while ( c != NULL) {
-			Serial.println("cDatabase 1"); 
-			if ( c->configure(key, value) ) break ;
-			c = theConfigs.getNext(c); }
-		Serial.println("cDatabase 2");
+//		Serial.print("cDatabase key: "); Serial.println(key);
+		configure(key, value, len);
 		setMillis(1) ; }
 	
 	void deleteData(char* key) {
@@ -115,6 +112,11 @@ class cDatabase : public cObserved, public cTimer {
 			lastAdr = adr;
 			if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ;} }
 			
+	void setConfig(char* key, char* value, int len) {
+		if (len == 0) len = strlen(value) ;
+		setData(key, value, len) ;
+		configure(key, value, len);}
+		
 	int getData (char* key, char* data, int len) {
 //		Serial.print("getdata key: "); Serial.println(key);
 //		printEEPROM() ;
@@ -136,5 +138,5 @@ class cDatabase : public cObserved, public cTimer {
 			Serial.println();} } };
 
 cDatabase theDataBase;
-
+#endif    // not ARDUINO_AVR_LARDU_328E
 #endif

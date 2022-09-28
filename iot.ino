@@ -4,6 +4,7 @@
 #include "cTest.h"
 #include "cNetwork.h"
 #include "cDatabase.h"
+#include "cDHT.h"
 #include "cMqtt.h"
 
 void setup() {
@@ -28,10 +29,19 @@ void setup() {
 //	theScheduler.insertChannel(&theMqtt) ;
 //	newDHT22(4,"Wohnz") ;
 //	newBME280("Wohnz") ;
+	new cTxtLedTest() ;
+
+	newLed(2, false, "LED");
+	newDHT22(4,"_1") ;
 */
-	newLed(2, false, "LED"); 
+	//newHeap("Heap") ;
+	//newRssi("Rssi") ;
+	new cTxtLedTest() ;
+
 }
 
 
-void loop() { systemLoop(); }
+void loop() { 
+	systemLoop(); 
+	}
 

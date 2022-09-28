@@ -1,5 +1,7 @@
 #ifndef CWIFI_H
 #define CWIFI_H
+#if defined(WIFI_AV)
+#include "cCore.h"
 
 //###################################### Webserver ######################################
 #if defined(ESP8266)
@@ -10,7 +12,6 @@ ESP8266WebServer theWebServer(80);
 #include <Update.h>
 WebServer theWebServer(80);
 #endif
-#include "cCore.h"
 //###################################### OTA-Update ######################################
 
 const char* htmlUpdate = "<form method='POST' action='/update' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Update'></form>";
@@ -49,10 +50,8 @@ void handleUpdate2() {
 			Serial.printf("Update Failed Unexpectedly (likely broken connection): status=%d\n", upload.status); } }
 
 //##################################### cWebElement #####################################
-
 class cWebElement ;
-cWebElement* aWebElement = NULL;
-
+tList<tLink<cWebElement>, cWebElement>  theWebElements ;
 
 class cWebElement {
   protected: 
@@ -63,11 +62,9 @@ class cWebElement {
 		theWebServer.arg(arg).toCharArray(param, pLen) ;
 		return true;}
   public:
-	cWebElement* nextElement;
 	cWebElement(char* u){
 		strncpy(uri,u,20);
-		nextElement = aWebElement;
-		aWebElement = this;}
+		theWebElements.insert(this) ; }
 	virtual bool handleElement() {return true; } 
 	virtual bool handleElement(char*u){
 		if (strlen(u) != strlen(uri)) return false;
@@ -81,60 +78,43 @@ class cWebElement {
 #include <WiFi.h>
 #endif
 #include "cDevice.h"
-#include "cDatabase.h"
 
-const char* htmlWifi = 
-	"<h3>WLAN</h3>"
-		"<p><form action=\"/setup\">"
-			"<p>SSID: <input type=\"text\" name=\"ssid\"pattern=\"{,9}\"></p>"
-			"<p>PWD: <input type=\"text\" name=\"pwd\"pattern=\"{,9}\" ></p>"
-			"<p><input type=\"submit\"></p></form></p>";
 
-class cWifi : public cTimer, public cDevice, public cObserver , public cWebElement {
+class cWifi : public cTimer, public cDevice, public cConfig {
   private :
 	char stationPwd[20] ;
 	char stationSsid[20] ;
 	char apSsid[20] ;
-	char localIP[16] ;
+
   public :
-	cWifi() : cWebElement("/setup") { 
-		strcpy(localIP,"");
-		theDataBase.addObserver(this);}
-	
-	void onEvent(int i, int evt) { init();}			// EEPROM available
+	cWifi() { 
+		strcpy(stationSsid,"") ;
+		setTimer(10);}
+
 	void init(){
 //		Serial.println("cWifi : init");
-		if (theDataBase.getData("ssid", stationSsid, 20)) {
-			theDataBase.getData("pwd", stationPwd, 20);
-			if(theDataBase.getData("apSSid", apSsid, 20)) {
-				WiFi.mode(WIFI_AP_STA);
-				WiFi.softAP(apSsid); }
-			else  WiFi.mode(WIFI_STA);
-		WiFi.disconnect();
-		reconnect();
-		setTimer(10);}
-		else {
-			WiFi.mode(WIFI_AP);
-			WiFi.softAP("newIoT"); 
-			setValue(val_wifiAP);} }
-			
-	const char* getLocalIP() {return localIP;}
+		WiFi.mode(WIFI_STA);
+		WiFi.disconnect() ;
+		reconnect() ;
+		setTimer(10) ; }
 
 	void reconnect() {
-//		WiFi.disconnect();
 //		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
 		WiFi.begin(stationSsid, stationPwd); }
-		
-	void setAuth(char* ssid, char* pw) {
-		strcpy(stationSsid, ssid);
-		theDataBase.setData("ssid",stationSsid,strlen(stationSsid));
-		strcpy(stationPwd, pw);
-		theDataBase.setData("pwd",stationPwd,strlen(stationPwd));
-		init(); }
+
+	bool configure(char* key, char* value, int vLen) {
+//		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
+		if (strcmp(key, "ssid") == 0) {
+			strcpy(stationSsid, value);
+			return true ;}
+		if (strcmp(key, "pwd") == 0) {
+			strcpy(stationPwd, value);
+			init();
+			return true ;}
+		return false ; }
 
 	void onDisconnected() {
 //		Serial.println("cWifi : Disconnected");
-		strcpy(localIP,"");
 		setValue(val_off);
 		reconnect();}
 
@@ -143,28 +123,13 @@ class cWifi : public cTimer, public cDevice, public cObserver , public cWebEleme
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
 			WiFi.softAP("newIoT");
-			setValue(val_wifiAP);
-			 } }
+			setValue(val_wifiAP); } }
 			
 	void onGotIP(){
-		WiFi.localIP().toString().toCharArray(localIP, 16) ;
-//		Serial.print("cWifi : onGotIP "); Serial.println(localIP);
+//		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
 		setValue(val_on);}
-		
-		String toString() const;
-	 
-	 
-	 
-	void onConnected(){ }
 
-	bool handleElement() {
-		char s[20];
-		if (getArgument("ssid", s, 20)) {
-			char p[20];
-			getArgument("pwd", p, 20);
-			setAuth(s,p);}
-		send(htmlWifi);
-		return false; } } ;
+	void onConnected(){ } } ;
 			
 cWifi theWifi ;
 #if defined(ESP8266)
@@ -177,7 +142,7 @@ WiFiEventId_t callbackDisconnected  = WiFi.onEvent([](WiFiEvent_t e, WiFiEventIn
 WiFiEventId_t callbackGotIP         = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onGotIP();}, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
 #endif
 
-//######################################## cWeb #########################################
+//######################################## cWeb ########################################## 
 const char* htmlHead = "<!DOCTYPE html><html>"
                     "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
                     "<link rel=\"icon\" href=\"data:,\">"
@@ -208,10 +173,10 @@ class cWeb : public cLooper, public cWebElement, public cObserver {
 		char u[20];
 		theWebServer.uri().toCharArray(u, 20) ;
 		theWebServer.sendContent(htmlHead);
-		cWebElement* e=aWebElement;
+		cWebElement* e = theWebElements.getNext(NULL) ;
 		while(e!=NULL) {
 			if (e->handleElement(u)) break; 
-			e=e->nextElement;}
+			e=theWebElements.getNext(e);}
 		theWebServer.sendContent("</head><body>");}
 		
 	bool handleElement() {
@@ -221,4 +186,52 @@ class cWeb : public cLooper, public cWebElement, public cObserver {
 	void onLoop(){theWebServer.handleClient();} };
 
 cWeb theWeb ;
+
+//##################################### cWebElement ###################################### 
+const char* htmlWifi = 
+	"<h3>WLAN</h3>"
+		"<p><form action=\"/setup\">"
+			"<p>SSID: <input type=\"text\" name=\"ssid\"pattern=\"{,9}\"></p>"
+			"<p>PWD: <input type=\"text\" name=\"pwd\"pattern=\"{,9}\" ></p>"
+			"<p><input type=\"submit\"></p></form></p>";
+
+class cWiFiWebsite : public cWebElement {
+  public :
+	cWiFiWebsite() : cWebElement("/setup") {}
+
+	bool handleElement() {
+		char s[20];
+		if (getArgument("ssid", s, 20)) {
+			theConfigurator->setConfig("ssid", s) ;
+//			theDataBase.setData("ssid",s);
+			char p[20];
+			getArgument("pwd", p, 20);
+			theConfigurator->setConfig("pwd", p) ; }
+//			theDataBase.setData("pwd",p);}
+		send(htmlWifi);
+		return false; } } ; 
+
+cWiFiWebsite theWiFiWebsite ;
+
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * 
+ *	RssiSensor misst die Feldstärke des verbundenen WiFi-Accespoints
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+class cRssi : public cIntervalSensor {
+  public :
+    cRssi() {
+		setInterval(30); }
+    void measure(){
+		uint16_t f=WiFi.RSSI();
+//		f = (f + f/10) / 10 ;
+		setValue(f); } } ;
+
+cRssi* newRssi(cb_function  f) {
+	cRssi* d =new cRssi() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
+#endif
 #endif

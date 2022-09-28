@@ -53,17 +53,18 @@ class cTxtLedTest: public cTimer {
   private:
 	cLed* myLed ;
   public :
-	cTxtLedTest() {
-		myLed = newLed(2, false, "LED1") ;
+	cTxtLedTest(int pLed = 2) {
+#ifdef ARDUINO_AVR_LARDU_328E
+		pLed = 13 ;
+#endif
+		myLed = newLed(pLed, false, "LED1") ;
 		setTimer(2) ;
 	}
 	void onTimeout() {
 		setTimer(5);
 		setTimer(2);
-		myLed->doComand(cmd_toogle);
-	}
-	
-} ;
+		myLed->doComand(cmd_toogle); } } ;
+
 
 class cLedTest: public cTimer {
   private:

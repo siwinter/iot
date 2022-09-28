@@ -356,6 +356,25 @@ cVcc* newVcc(cb_function  f) {
 	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
 	return d ; }
 
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * 
+ *	HeapSensor gibt die Größe des verbleibenden Heaps aus
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+class cHeap : public cIntervalSensor {
+  public :
+    cHeap() {
+		setInterval(30); }
+    void measure(){
+		uint16_t f=ESP.getFreeHeap();
+		setValue(f); } } ;
+
+cHeap* newHeap(cb_function  f) {
+	cHeap* d =new cHeap() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
 #endif
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

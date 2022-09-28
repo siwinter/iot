@@ -1,5 +1,6 @@
 #ifndef MQTT_h
 #define MQTT_h
+#if defined(WIFI_AV)
 
 #include <Arduino.h>
 #if defined(ESP8266)
@@ -10,14 +11,14 @@
 #include "PubSubClient.h"
 #include "cNetwork.h"
 #include "cWifi.h"
-#include "cDatabase.h"
+//#include "cDatabase.h"
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) ;
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
-class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObserver{
+class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObserver, public cConfig {
   private :
   
 	char macAdr[13] ;
@@ -36,58 +37,50 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			else macAdr[i*2+1] = h + '0' ; }
 		macAdr[12] = 0 ; }
 
-	bool getBrokerID() {
-		uint8_t bytes[6];
-		if (theDataBase.getData("broker", (char*)bytes, 6)) {
-			brokerPort = bytes[4]*256 + bytes[5];
-			brokerIp=IPAddress(bytes[0],bytes[1],bytes[2],bytes[3]);
-//			Serial.print("mqtt : connect to broker ");Serial.print(brokerIp); Serial.print(":"); Serial.println(brokerPort);
-			return true ; }
-		return false ; }
-
   public :
 	cMqttChannel() {
 		client.setCallback(mqttCallback);
-		dbEvent = theDataBase.addObserver(this) ;
 		wifiEvent =theWifi.addObserver(this);
-		getMAC() ;
-//		theScheduler.insertChannel(this) ;
-		if (getBrokerID()) reconnect(); }
-		
-	int dbEvent ;
+		getMAC() ; }
+
+	bool configure(char* key, char* value, int vLen) {
+//		Serial.print("cMqtt key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
+		if (strcmp(key, "broker") == 0) {
+			brokerPort = value[4]*256 + value[5] ;
+			brokerIp = IPAddress(value[0], value[1], value[2], value[3]) ;
+			reconnect() ;
+			return true ; }
+		return false ; }
+
 	int wifiEvent ;
 	void onEvent(int i, int evt) { 
-		if (i == dbEvent) {
-			if (evt == val_on) {
-				if (getBrokerID()) reconnect() ; }
-		}
-		else if (i == wifiEvent) {		// wifi connected to router
+		if (i == wifiEvent) {		// wifi connected to router
 			if (evt == val_on) reconnect() ; } } 
 		
 	bool reconnect() {
-		Serial.println("mqtt reconnect");
+//		Serial.println("mqtt reconnect");
 		if (!client.connected()) {
-			Serial.println("mqtt 1");
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
 				Serial.println("mqtt connected");
-				fireEvent(val_connected) ;
+				
+				char info[cInfoLen] ;
+				WiFi.localIP().toString().toCharArray(info, cInfoLen) ;
+				theChannels.getNext(NULL)->sendEvent("IP", info);
+				
+				connected() ;
 				return true ;}
-			Serial.println("mqtt 2");
 			setTimer(5);
 			return false ; }
-		Serial.println("mqtt 3");
 		return true ; }
 
 	void sendMsg(char* topic, char* info) { 
-		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
+//		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
 		client. publish(topic, info); }
 	
 	bool sendComand(char* topic, char* info) {return false ; }
 
-	void subscribe(char* topic) {   // sbs/cmd/nodename/#
-		Serial.print("cMqtt.subscribe: "); Serial.println(topic+4);
-		client.subscribe(topic+4) ;}
+	void subscribe(char* topic) { client.subscribe(topic) ;}
 
 	void onTimeout() { reconnect() ; }
 
@@ -100,10 +93,10 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 	strcpy(theMqtt.topic, topic) ;
 	strncpy(theMqtt.info, (char*)payload,length) ;
 	theMqtt.info[length] = 0 ;
-	Serial.print("cMqtt.received: "); Serial.print(theMqtt.topic); Serial.print(" "); Serial.println(theMqtt.info);
+//	Serial.print("cMqtt.received: "); Serial.print(theMqtt.topic); Serial.print(" "); Serial.println(theMqtt.info);
 	theMqtt.received() ; }
 
-
+//##################################### cWebElement ###################################### 
 const char* htmlMqtt = 
 	"<h3>MQTT-Settings</h3>"
 		"<p><form action=\"/setup\">"
@@ -116,7 +109,6 @@ const char* htmlMqtt =
 
 class cMqttWebsite : public cWebElement {
   public :
-	
 	cMqttWebsite() : cWebElement("/setup") {}
 
 	bool ip2Byte(char* txtIP, uint8_t* byteIP) {
@@ -171,13 +163,13 @@ class cMqttWebsite : public cWebElement {
 							else port = port * 10 + txt[i] -'0';} } } } 
 			if (argsOkay) newBroker(byteIP, port);}
 		if (getArgument("node", txt, 16)) {
-//			Serial.print("handleElement node: ");Serial.println(txt); 
-//			theScheduler.newNodeName(txt);
-			}
+//			Serial.print("handleElement node: ");Serial.println(txt);
+			theConfigurator->setConfig("node", txt) ; }
 		send(htmlMqtt);
 		return false; }
 } ; 
 
 cMqttWebsite theMqttWebsite ;
 
+#endif
 #endif

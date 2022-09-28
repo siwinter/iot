@@ -2,6 +2,7 @@
 #define CORE_H
 
 #include <Arduino.h>
+#include "flags.h"
 
 #define cmd_off    0
 #define cmd_on     1
@@ -15,6 +16,7 @@
 #define val_connected 	 4
 #define val_wifiAP 		12
 
+//#################################### List Template #####################################
 template < typename T >
 class tLink {
   public:
@@ -40,8 +42,7 @@ class tList {
 		emptyChain = l ; }
 
   public:
-  
-	tList() {
+  	tList() {
 		anchor = NULL ;
 		index = NULL ;
 		emptyChain = NULL ;}
@@ -80,8 +81,7 @@ class tList {
 			l = l->next; } }
 };
 
-// tList<tLink<int>, int> * eineListe ;
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//####################################### cLooper ######################################## 
 
 class cLooper ;
 tList<tLink<cLooper>, cLooper>  theLoopers ;
@@ -90,7 +90,7 @@ class cLooper {
 	cLooper() { theLoopers.insert(this); }
     virtual void onLoop() = 0; } ;
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//####################################### cTimer ######################################### 
 class cTimer ;
 tList<tLink<cTimer>, cTimer>  theTimers ;
 
@@ -123,8 +123,8 @@ class cTimer {
 			lastLink = actualLink;
 			actualLink = theTimers.getNextLink(lastLink) ; }
 		theTimers.insert(this, lastLink) ; } };
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+//###################################### cObserver ####################################### 
 class cObserver {
   public:
 	cObserver() {} ;
@@ -156,8 +156,30 @@ class cObserved {
 			
 int  cObserved :: oNumber = 0 ;	// Initialisisierung des Objektzählers
 
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//#################################### cConfigurator ##################################### 
+class cConfig ;
+tList<tLink<cConfig>, cConfig>  theConfigs ;
 
+class cConfigurator ;
+cConfigurator* theConfigurator = NULL ;
+
+class cConfig {
+  public:
+	cConfig() { theConfigs.insert(this); }
+	virtual bool configure(char* key, char* value, int vLen = 0) {return false;} } ;
+
+class cConfigurator {
+  protected:	
+	void configure(char* key, char* value, int vLen = 0) {
+		cConfig* c = theConfigs.getNext(NULL);
+		while ( c != NULL) { 
+			if ( c->configure(key, value, vLen) ) break ;
+			c = theConfigs.getNext(c); } } ;
+  public:
+	cConfigurator() {theConfigurator = this ;}
+	virtual void setConfig(char* key, char* value, int len=0) = 0 ;} ;
+	
+//##################################### systemLoop ####################################### 
 void systemLoop() {
 	cLooper* l = theLoopers.getNext(NULL) ;
 	while ( l != NULL) {
@@ -168,25 +190,6 @@ void systemLoop() {
 		if (millis() < t->timeToExpire ) return ;
 		t->resetTimer();
 		t->onTimeout(); } }
-class cSetup ;
-cSetup * aSetup;
 
-class cConfig ;
-tList<tLink<cConfig>, cConfig>  theConfigs ;
 
-class cConfig {
-  public:
-	cConfig() { theConfigs.insert(this); }
-	virtual bool configure(char* key, char* value) {return false;}
-} ;
-
-class cSetup {
-  public:
-	char name[6];
-	cSetup* nextSetup;
-	cSetup() {nextSetup =  NULL; regSetup(); }
-    void regSetup() {
-		nextSetup = aSetup ;
-		aSetup = this ; } 
-	virtual bool configure(char topic, char* data) {return false  ; } } ;
 #endif
