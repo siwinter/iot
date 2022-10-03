@@ -11,7 +11,7 @@
 #include "PubSubClient.h"
 #include "cNetwork.h"
 #include "cWifi.h"
-//#include "cDatabase.h"
+#include "cDatabase.h"
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) ;
 
@@ -38,7 +38,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		macAdr[12] = 0 ; }
 
   public :
-	cMqttChannel() {
+	cMqttChannel() : cChannel(true) {			// Mqtt is always upstream = true
 		client.setCallback(mqttCallback);
 		wifiEvent =theWifi.addObserver(this);
 		getMAC() ; }
@@ -63,7 +63,6 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
 				Serial.println("mqtt connected");
-				
 				char info[cInfoLen] ;
 				WiFi.localIP().toString().toCharArray(info, cInfoLen) ;
 				theChannels.getNext(NULL)->sendEvent("IP", info);
@@ -78,7 +77,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 //		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
 		client. publish(topic, info); }
 	
-	bool sendComand(char* topic, char* info) {return false ; }
+	bool sendComand(char* topic, char* info) {return false ; }	// mqtt always upstream never forwards cmd-message
 
 	void subscribe(char* topic) { client.subscribe(topic) ;}
 

@@ -56,6 +56,20 @@ class tList {
 		else {
 			nl->next = l->next ;
 			l->next = nl ; }}
+			
+	void append(Te* e) {
+		if (anchor == NULL) insert(e);
+		else {
+			Tl* l=anchor;
+			while(l->next != NULL) l=l->next;
+			insert(e, l) ; } }
+			
+	Te* getFirst() {
+		if (anchor != NULL) {
+			Te* e = anchor->element ;
+			anchor = anchor->next ;
+			return e ; }
+		else return NULL; }
 	
 	Te* getNext(Te* e) {
 		if (e == NULL) index = anchor ;
@@ -63,6 +77,8 @@ class tList {
 		Te* re = index->element ;
 		index = index->next ;
 		return re ; }
+		
+	Te* readNext(Te* e) { return getNext(e); }
 			
 	Tl* getNextLink(Tl* l) {
 		if (l == NULL ) return anchor ;

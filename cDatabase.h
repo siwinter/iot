@@ -80,11 +80,12 @@ class cDatabase : public cTimer, public cConfigurator {
 		len = EEPROM.read(nextAdr++);
 		i; for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
 		value[i] = 0;
-//		Serial.print("cDatabase key: "); Serial.println(key);
+		Serial.print("cDatabase.onTimeout key: "); Serial.println(key);
 		configure(key, value, len);
 		setMillis(1) ; }
 	
 	void deleteData(char* key) {
+		Serial.print("cDatabase.deleteData "); Serial.println(key);
 		int adr = findKey(key, 3) ;
 		while (adr != 0) {
 			int destAdr = adr ;
@@ -98,11 +99,12 @@ class cDatabase : public cTimer, public cConfigurator {
 		if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ; }
 			
 	void setData(char* key, char* data, int dataLen=0) {
+		Serial.print("theDatabase.setData: "); Serial.println(key);
 		deleteData(key);
 		if (dataLen==0) dataLen=strlen(data);
 		if((lastAdr + strlen(key) + dataLen + 2) > EEPROMsize) Serial.println("error EEPROM size");
 		else {
-//			Serial.print("writeConfig at "); Serial.print(adr); Serial.print("  "); Serial.println(strlen(key));
+//			Serial.print("writeConfig at "); Serial.print(lastAdr); Serial.print("  "); Serial.println(strlen(key));
 			int adr = lastAdr ;
 			EEPROM.write(adr++, strlen(key)) ;
 			for(int i=0; i<strlen(key); i++) EEPROM.write(adr++,key[i]) ;

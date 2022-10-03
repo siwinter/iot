@@ -92,18 +92,18 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 		setTimer(10);}
 
 	void init(){
-//		Serial.println("cWifi : init");
+		Serial.println("cWifi : init");
 		WiFi.mode(WIFI_STA);
 		WiFi.disconnect() ;
 		reconnect() ;
 		setTimer(10) ; }
 
 	void reconnect() {
-//		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
+		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
 		WiFi.begin(stationSsid, stationPwd); }
 
 	bool configure(char* key, char* value, int vLen) {
-//		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
+		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
 		if (strcmp(key, "ssid") == 0) {
 			strcpy(stationSsid, value);
 			return true ;}
@@ -114,11 +114,12 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 		return false ; }
 
 	void onDisconnected() {
-//		Serial.println("cWifi : Disconnected");
+		Serial.println("cWifi : Disconnected");
 		setValue(val_off);
 		reconnect();}
 
 	void onTimeout() {
+		Serial.println("cWiFi.onTimeout");
 		if (WiFi.status() != WL_CONNECTED) {
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
@@ -127,7 +128,10 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 			
 	void onGotIP(){
 //		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
-		setValue(val_on);}
+		Serial.print("cWifi : MAC: ");Serial.println(WiFi.macAddress());
+
+		setValue(val_on);
+		Serial.println("cWifi.onGotIP end");}
 
 	void onConnected(){ } } ;
 			

@@ -106,13 +106,13 @@ cVcc* newVcc(char* n) {
 	cVcc* d = new cVcc() ;
 	new cTxtAdapter(new cValueTranslator(2), d, n);
 	return d ; }
-	
+/*	
 #include "cWifi.h" 
 cRssi* newRssi(char* n) {
 	cRssi* d = new cRssi() ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
-
+*/
 cHeap* newHeap(char* n) {
 	cHeap* d = new cHeap() ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);

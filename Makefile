@@ -30,6 +30,7 @@
 BOARD = esp8266:esp8266:d1_mini:baud=921600                            # Wemos D1 Mini
 
 PORT = /dev/ttyUSB0
+#PORT = /dev/ttyUSB1
 #PORT = /dev/ttyACM0
 
 #########################################################################
