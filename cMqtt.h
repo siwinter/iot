@@ -13,6 +13,24 @@
 #include "cWifi.h"
 #include "cDatabase.h"
 
+char* ip2txt(const uint8_t* ip,char* t) {
+//	Serial.println("ip2txt");
+	char txt[17] ;
+	int j = 16 ;
+	for (int i = 3 ; i >= 0 ; i--) {
+		uint8_t v = ip[i] ;
+		if (v == 0) txt[j--] = '0' ;
+		else 
+		while (v > 0) {
+			txt[j--] = (char)(v%10 + '0') ;
+			v = v / 10 ;  }
+		if (i>0) txt[j--] = '.' ; }
+	int i = 0;
+	while(j<17) t[i++] = txt[++j] ;
+	t[i] = 0 ; 
+	return t ;}
+	
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) ;
 
 WiFiClient wifiClient;
@@ -62,11 +80,14 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		if (!client.connected()) {
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
-				Serial.println("mqtt connected");
+//				Serial.println("mqtt connected");
 				char info[cInfoLen] ;
-				WiFi.localIP().toString().toCharArray(info, cInfoLen) ;
-				theChannels.getNext(NULL)->sendEvent("IP", info);
-				
+				uint32_t ip = WiFi.localIP() ;
+				ip2txt((uint8_t*)(&ip),info) ;
+				int l = strlen(theEvtTopic) ;
+				strcpy((theEvtTopic + l), "IP");
+				theChannels.readNext(NULL)->sendMsg(theEvtTopic, info);
+				theEvtTopic[l] = 0 ;
 				connected() ;
 				return true ;}
 			setTimer(5);
@@ -79,7 +100,9 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 	
 	bool sendComand(char* topic, char* info) {return false ; }	// mqtt always upstream never forwards cmd-message
 
-	void subscribe(char* topic) { client.subscribe(topic) ;}
+	void subscribe(char* topic) { 
+		Serial.print("cMqtt.subscribe "); Serial.println(topic);
+		client.subscribe(topic) ;}
 
 	void onTimeout() { reconnect() ; }
 
@@ -92,7 +115,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 	strcpy(theMqtt.topic, topic) ;
 	strncpy(theMqtt.info, (char*)payload,length) ;
 	theMqtt.info[length] = 0 ;
-//	Serial.print("cMqtt.received: "); Serial.print(theMqtt.topic); Serial.print(" "); Serial.println(theMqtt.info);
+	Serial.print("cMqtt.received: "); Serial.print(theMqtt.topic); Serial.print(" "); Serial.println(theMqtt.info);
 	theMqtt.received() ; }
 
 //##################################### cWebElement ###################################### 

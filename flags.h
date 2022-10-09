@@ -18,12 +18,13 @@
 
 #if defined(ESP8266)
 #define WIFI_AV			// WiFi available
+#define EEPROM_AV		// EEPROM available
 #endif
 
 
 #if defined(ESP32)
 #define WIFI_AV			// WiFi available
+#define EEPROM_AV		// EEPROM available
 #endif
-
 
 #endif

@@ -156,7 +156,7 @@ class cLatch : public cDevice, public cTimer {
 			case cmd_off :
 			  setOff() ;
 			  break ;
-			case cmd_toogle :
+			case cmd_toggle :
 			  toogle() ;
 			  break ; } } } ;
 
@@ -196,7 +196,7 @@ class cRelais : public cDevice {
 			case cmd_off :
 			  setOff() ;
 			  break ;
-			case cmd_toogle :
+			case cmd_toggle :
 			  toogle() ;
 			  break ;
 		}
@@ -220,7 +220,7 @@ class cLed : public cRelais, public cTimer {
     uint16_t interval ;
     
   public:
-	cLed(int p, bool ao) : cRelais(p, ao ){interval = 1;};
+	cLed(int p=LED_BUILTIN, bool ao=true) : cRelais(p, ao ){interval = 1;};
 	
 	void setBlink() {
 		if ((getValue() == val_off) || (getValue() == val_on) ) {
@@ -241,7 +241,7 @@ class cLed : public cRelais, public cTimer {
 			case cmd_off :
 			  setOff() ;
 			  break ;
-			case cmd_toogle :
+			case cmd_toggle :
 			  toogle() ;
 			  break ;
 			case cmd_blink :

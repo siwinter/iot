@@ -6,7 +6,7 @@
 
 #define cmd_off    0
 #define cmd_on     1
-#define cmd_toogle 2
+#define cmd_toggle 2
 #define cmd_blink  3
 
 #define val_off    		 0
@@ -17,6 +17,9 @@
 #define val_wifiAP 		12
 
 //#################################### List Template #####################################
+
+//bool global_p=false ;
+
 template < typename T >
 class tLink {
   public:

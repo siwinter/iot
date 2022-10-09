@@ -2,6 +2,51 @@
 #define NTWDEVICE_h
 
 
+class cTranslator {
+  public:
+	virtual char* int2str(char* s, int i) = 0;
+	virtual int str2int(char* s) = 0; } ;
+
+
+class cTxtAdapter : public cCmdInterface , public cObserver {
+  private:
+	cDevice* device ;
+	char deviceName[cNameLen] ;
+  public:
+	cTranslator * format ;
+	
+	cTxtAdapter(){
+		device = NULL;
+		format = NULL ;
+//		theDevices.append(this);
+	}
+
+	cTxtAdapter(cTranslator* sf, cDevice* d, char* n) {
+		device = d;
+		device->addObserver(this);
+		strcpy(deviceName, n);
+		format = sf ; 
+		theDevices.insert(this); }
+		
+	void doComand(char* cmd) { device->doComand(format->str2int(cmd)) ; }
+	
+	void onEvent(int i, int c) {
+		char info[cInfoLen] ;
+		format->int2str(info, c) ;
+		int l = strlen(theEvtTopic) ;
+		strcpy((theEvtTopic + l), deviceName);
+		theChannels.readNext(NULL)->sendMsg(theEvtTopic, info);
+		theEvtTopic[l] = 0 ; }
+	
+	bool receiveCmd(char* name, char* info) {
+		if ( strcmp(deviceName, name) != 0 ) return false ;
+		doComand(info) ;
+		return true ;} };
+
+//void cTxtAdapter :: onEvent(int i, int c)
+
+
+
 class cStateTranslator : public cTranslator {
 	char* int2str(char* s, int i) {
 		switch (i) {
@@ -22,7 +67,7 @@ class cStateTranslator : public cTranslator {
 	int str2int(char* s) {
 		if (strcmp(s, "off") == 0) return cmd_off ;
 		if (strcmp(s, "on") == 0) return cmd_on ;
-		if (strcmp(s, "toogle") == 0) return cmd_toogle ;
+		if (strcmp(s, "toggle") == 0) return cmd_toggle ;
 		if (strcmp(s, "blink") == 0) return cmd_blink ; 
 		return 99 ;} ; } ;
 /*
@@ -90,6 +135,9 @@ cLed* newLed(int p, bool ao, char*  n) {
 	cLed* d =new cLed(p, ao) ;
 	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
+
+cLed*newLed(char* n) {
+	return newLed(LED_BUILTIN, !digitalRead(LED_BUILTIN), n) ;}
 
 cClock* newClock(char* n) {
 	cClock* d =new cClock() ;

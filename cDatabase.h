@@ -1,11 +1,9 @@
 #ifndef DATABASE_h
 #define DATABASE_h
 
+#if defined(EEPROM_AV)
+
 #include "cCore.h"
-#ifdef ARDUINO_AVR_LARDU_328E
-
-#else	
-
 #include <EEPROM.h>
 /*
  * ToDos:
@@ -19,7 +17,6 @@
 
 #define EEPROMsize 512
 
-#include <EEPROM.h>
 class cDatabase : public cTimer, public cConfigurator {
   private:
 	int nextAdr = 0 ; 
@@ -69,7 +66,7 @@ class cDatabase : public cTimer, public cConfigurator {
 			nextAdr = 3;
 			setMillis(1) ;
 			return ;}
-		delay (100);
+//		delay (100);
 //		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
 		char key[30] ;
 		char value[30] ;
@@ -80,12 +77,11 @@ class cDatabase : public cTimer, public cConfigurator {
 		len = EEPROM.read(nextAdr++);
 		i; for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
 		value[i] = 0;
-		Serial.print("cDatabase.onTimeout key: "); Serial.println(key);
+//		Serial.print("cDatabase.onTimeout key: "); Serial.println(key);
 		configure(key, value, len);
 		setMillis(1) ; }
 	
 	void deleteData(char* key) {
-		Serial.print("cDatabase.deleteData "); Serial.println(key);
 		int adr = findKey(key, 3) ;
 		while (adr != 0) {
 			int destAdr = adr ;
@@ -99,7 +95,6 @@ class cDatabase : public cTimer, public cConfigurator {
 		if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ; }
 			
 	void setData(char* key, char* data, int dataLen=0) {
-		Serial.print("theDatabase.setData: "); Serial.println(key);
 		deleteData(key);
 		if (dataLen==0) dataLen=strlen(data);
 		if((lastAdr + strlen(key) + dataLen + 2) > EEPROMsize) Serial.println("error EEPROM size");
@@ -130,15 +125,31 @@ class cDatabase : public cTimer, public cConfigurator {
 		data[i] = 0;
 //		Serial.println(data);
 		return dataLen ; }
+	
+	bool getData(int nr, char* key, char* data, int* dataLen) {
+		int adr = 3;
+		for (int i=0 ; i<nr ; i ++) {
+			adr = nextKey(adr) ;
+			if (adr == 0) return false ;}
+		int len = EEPROM.read(adr++);
+		if ( len == 0 ) return false;
+		int i; for (i=0; i<len; i++) key[i] = EEPROM.read(adr++) ;
+		key[i] = 0;
+		len = EEPROM.read(adr++);
+		i; for (i=0; i<len; i++) data[i] = EEPROM.read(adr++) ;
+		data[i] = 0;
+		*dataLen = len ; 
+		return true; }
 		
-	void printEEPROM() {
+/*	void printEEPROM() {
 		int adr = 0 ;
 		Serial.print("EEPROM-length: "); Serial.println(lastAdr);
 		while (adr < lastAdr) {
 			Serial.print(adr) ; Serial.print(" : ");
 			for(int i=0; i<10; i++) {Serial.print(EEPROM.read(adr++)); Serial.print(","); } 
-			Serial.println();} } };
+			Serial.println();} } */
+			};
 
 cDatabase theDataBase;
-#endif    // not ARDUINO_AVR_LARDU_328E
+#endif    // no EEPROM available
 #endif

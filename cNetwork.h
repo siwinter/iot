@@ -3,13 +3,13 @@
 
 #include "cCore.h"
 
-#define cTopicLen 20
+#define cTopicLen 50
+#define cInfoLen 50
 #define cNameLen 20
-#define cInfoLen 20
 #define cNodeNameLen 8
 
-class cTxtAdapter ;
-tList<tLink<cTxtAdapter>, cTxtAdapter>  theDevices ;
+class cCmdInterface ;
+tList<tLink<cCmdInterface>, cCmdInterface>  theDevices ;
 
 class cChannel ;
 tList<tLink<cChannel>, cChannel>  theChannels ;
@@ -17,36 +17,13 @@ tList<tLink<cChannel>, cChannel>  theChannels ;
 char theEvtTopic[cTopicLen] = "evt/";
 char* theNodeName = theEvtTopic + 4;
 
-//##################################### cTxtAdapter ###################################### 
-class cTranslator {
-  public:
-	virtual char* int2str(char* s, int i) = 0;
-	virtual int str2int(char* s) = 0; } ;
-
-class cTxtAdapter : public cObserver {
-  private:
-	cDevice* device ;
-	char deviceName[cNameLen] ;
-  public:
-	cTranslator * format ;
-
-	cTxtAdapter(cTranslator* sf, cDevice* d, char* n) {
-		device = d;
-		device->addObserver(this);
-		strcpy(deviceName, n);
-		format = sf ; 
-		theDevices.insert(this); }
-		
-	void doComand(char* cmd) { device->doComand(format->str2int(cmd)) ; }
-	
-	void onEvent(int i, int c) ;
-	
-	bool receiveCmd(char* name, char* info) {
-		if ( strcmp(deviceName, name) != 0 ) return false ;
-		doComand(info) ;
-		return true ;} };
-
+//#################################### cCmdInterface ##################################### 
+class cCmdInterface {
+  public :
+	cCmdInterface() { theDevices.append(this); }
+	virtual bool receiveCmd(char* name, char* info) = 0 ; } ;
 //####################################### cChannel ########################################
+
 class cNode {
   public:
 	cNode(char* n) {
@@ -60,13 +37,18 @@ class cNode {
 
 class cChannel : public cObserved {
   private :
-	tList<tLink<cNode>, cNode>  myNodes ;	// Liste der Nodes für die  
-	int localCmd(char* topic) {
+	tList<tLink<cNode>, cNode>  myNodes ;	// Liste der Nodes für die der Channel zuständig ist
+
+	bool isConnected = false;
+	
+	int localCmd(char* topic) {				// cmd/nodeName/deviceName
 		char* t = topic + 4 ;
+		if((t[0]=='.') && (t[1]=='/')) return 6 ;
 		int nameLength = strlen(theNodeName) ;
 		int i ;
 		for (i=0; i<nameLength; i++) { if(t[i] != theNodeName[i]) return 0; }
-		return i + 4; }
+		return (i + 4); }
+		
 	void storeNodeName(char* t) {			// t: nodeName/#
 		cNode* n = new cNode(t) ;				// s.w. Doppeleinträge werden hier nicht verhindert !!!
 		myNodes.insert(n); }
@@ -87,55 +69,50 @@ class cChannel : public cObserved {
 	
 	char topic[cTopicLen] ;
 	char info[cInfoLen] ;
-	void subscribeMe() {
-		if ( theChannels.readNext(NULL) == this ) 
-			if ( strlen(theNodeName) > 0 ) {
-				char sbsTxt[cTopicLen] ;
-				strcpy(sbsTxt, "cmd/");
-				strcat(sbsTxt, theNodeName); 
-				strcat(sbsTxt, "#"); 
-				subscribe(sbsTxt); } }
+				
+	void upstreamActive() {
+		if ( theChannels.readNext(NULL) == this ) {
+			char sbsTxt[cTopicLen] ;
+			strcpy(sbsTxt, "cmd/");
+			strcat(sbsTxt, theNodeName); 
+			strcat(sbsTxt, "#"); 
+			subscribe(sbsTxt); 
+			fireEvent(val_connected) ; } }
 
 	void connected() {
-		char sbs[cTopicLen] ;
-		strcpy(sbs, "cmd/");
-		strcat(sbs, theNodeName); 
-		strcat(sbs, "#"); 
-		subscribe(sbs);
-		fireEvent(val_connected) ; }
+		isConnected = true ;
+		if (strlen(theNodeName) > 0) upstreamActive() ; }
+
+	void nameChanged() {
+		if (isConnected) upstreamActive() ; }
 
 	void received() {
-		Serial.println("received");
+//		Serial.print("received ");
 		if ((topic[0]=='e')&&(topic[1]=='v')&&(topic[2]=='t')&&(topic[3]=='/')) { // topic; evt/nodeName/deviceName
+//			Serial.println("evt");
 			theChannels.getNext(NULL)->sendMsg(topic, info) ;
 			return ; } 
 		if ((topic[0]=='c')&&(topic[1]=='m')&&(topic[2]=='d')&&(topic[3]=='/')) { // topic: cmd/nodeName/deviceName
+//			Serial.println("cmd");
 			int devicePointer = 0;
 			if (devicePointer = localCmd(topic)) {
 				char* deviceName = topic + devicePointer;
-				cTxtAdapter * d = theDevices.getNext(NULL) ;
+				cCmdInterface * d = theDevices.getNext(NULL) ;
 				while (d != NULL) {
 					if (d->receiveCmd(deviceName, info)) return ;
 					d = theDevices.getNext(d) ; } }
 			else {
+//				Serial.println("----> to first Channel ");
 				cChannel* channel = theChannels.getNext(theChannels.getNext(NULL)) ; //start with second Channel (= downstream-Channel)
 				while (channel != NULL) {
 					if (channel->sendComand(topic, info)) return ;
 					channel = theChannels.getNext(channel) ; } }
 			return;}
 		if ((topic[0]=='s')&&(topic[1]=='b')&&(topic[2]=='s')&&(topic[3]=='/')) { // topic: sbs/nodeName/#
+//			Serial.println("sbs");
 			theChannels.getNext(NULL)->subscribe(topic + 4) ;
 			storeNodeName(topic + 4) ;
 			return ; } } };
-//-----------------------------------------------------------------------------------------
-void cTxtAdapter :: onEvent(int i, int c) {
-	char info[cInfoLen] ;
-	format->int2str(info, c) ;
-	int l = strlen(theEvtTopic) ;
-	strcpy((theEvtTopic + l), deviceName);
-	theChannels.readNext(NULL)->sendMsg(theEvtTopic, info);
-	theEvtTopic[l] = 0 ; }
-
 //##################################### cNodeName ########################################
 class cNodeName : public cConfig {
   public :
@@ -143,7 +120,7 @@ class cNodeName : public cConfig {
 		if (strcmp(key, "node") == 0) {
 			strcpy(theNodeName,value);
 			strcat(theNodeName,"/");
-			theChannels.readNext(NULL)->subscribeMe();
+			theChannels.readNext(NULL)->nameChanged();
 			return true ; }
 		return false ; } } ;
 
@@ -151,12 +128,12 @@ cNodeName theNode ;
 void changeTopicName(char* t) { theNode.configure("node", t, strlen(t)); }
 
 //################################### cSerialChannel #####################################
-class cSerialChannel : public cChannel, cLooper {
+class cSerialChannel : public cChannel, public cLooper {
   private :
-    bool receiving = false ;
+    uint8_t receiving = 0 ;
     int msgIndex ;
     int maxLen ;
-    char buf[cInfoLen] ;
+	char* buf ;
   public:
 	bool active ;
 	cSerialChannel() : cChannel(true) {		// insert as upstream (may be changed by next channel)  
@@ -169,28 +146,29 @@ class cSerialChannel : public cChannel, cLooper {
 			c = Serial.read();
 			switch (c) {
 			  case '>':
-				receiving = true ;
+				receiving = 1 ;
 				msgIndex = 0 ;
+				buf = topic ;
 				maxLen = cTopicLen ;
 				break ;
 			  case ':':
-				if (receiving) {
+				if (receiving == 1) {
+					receiving = 2 ;
 					buf[msgIndex++] = 0 ;
-					strcpy(topic, buf);
+					buf = info ;
 					msgIndex = 0 ;
 					maxLen = cInfoLen ; }
 				break ;
 			  case 13:
 			  case 10:
-				if (receiving) {
+				if (receiving > 0) {
 					buf[msgIndex++] = 0 ;
-					strcpy(info, buf);
-//					Serial.print("cSerialChannel : received  ");Serial.print(msg.name);Serial.print(":");Serial.println(msg.info);
+//					Serial.print("cSerialChannel : received  ");Serial.print(topic);Serial.print(":");Serial.println(info);
 					received();
-					receiving = false; }
+					receiving = 0; }
 				break ;
 			  default :
-				if (receiving) buf[msgIndex++] = c ;} } }
+				if (receiving > 0 ) buf[msgIndex++] = c ;} } }
 
 	void subscribe(char* topic) {
 		Serial.print(">sbs/");
@@ -203,6 +181,6 @@ class cSerialChannel : public cChannel, cLooper {
 		Serial.println(info); } } ;
 		
 cSerialChannel theSerial ;
-#include "cNtwDevices.h"
 
+#include "cNtwDevices.h"
 #endif
