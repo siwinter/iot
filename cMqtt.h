@@ -54,6 +54,17 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			if (h>9) macAdr[i*2+1] = h - 10 + 'A' ;
 			else macAdr[i*2+1] = h + '0' ; }
 		macAdr[12] = 0 ; }
+		
+	void connected(){
+		char info[cInfoLen] ;
+		uint32_t ip = WiFi.localIP() ;
+		ip2txt((uint8_t*)(&ip),info) ;
+		theEvtTopic[0] = 'n' ;					// to subscribe this node ;
+		int l = strlen(theEvtTopic) ;
+		strcpy((theEvtTopic + l), "IP");
+		sendEvent(theEvtTopic, info);
+		theEvtTopic[l] = 0 ;
+		theEvtTopic[0] = 'e' ; }
 
   public :
 	cMqttChannel() : cChannel(true) {			// Mqtt is always upstream = true
@@ -80,14 +91,11 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		if (!client.connected()) {
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
-//				Serial.println("mqtt connected");
-				char info[cInfoLen] ;
-				uint32_t ip = WiFi.localIP() ;
-				ip2txt((uint8_t*)(&ip),info) ;
-				int l = strlen(theEvtTopic) ;
-				strcpy((theEvtTopic + l), "IP");
-				theChannels.readNext(NULL)->sendMsg(theEvtTopic, info);
-				theEvtTopic[l] = 0 ;
+				Serial.println("mqtt connected");
+				cChannel* c = theChannels.getNext(theChannels.getNext(NULL));
+				while(c != NULL) {
+					c->resetNodeList();	
+					c=theChannels.getNext(c); }
 				connected() ;
 				return true ;}
 			setTimer(5);
@@ -95,8 +103,20 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		return true ; }
 
 	void sendMsg(char* topic, char* info) { 
-//		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
+		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
 		client. publish(topic, info); }
+
+	void sendEvent(char* topic, char* info) {
+//		Serial.print("cMqtt.sendEvent "); Serial.println(topic);
+		if ( topic[0] == 'n' ) {
+			char t[cTopicLen] = "cmd/";
+			int i = 4;
+			while (topic[i] != '/') t[i++] = topic[i];
+			t[i++]='/'; t[i++]='#'; t[i++]=0; 
+			subscribe(t);}
+		topic[0] = 'e';
+		sendMsg(topic, info) ; }
+	
 	
 	bool sendComand(char* topic, char* info) {return false ; }	// mqtt always upstream never forwards cmd-message
 
@@ -106,8 +126,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 
 	void onTimeout() { reconnect() ; }
 
-	void onLoop() { client.loop() ; }
-};
+	void onLoop() { client.loop() ; } };
 
 cMqttChannel theMqtt ;
 

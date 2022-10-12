@@ -5,9 +5,9 @@
 #include "cNetwork.h"
 #include "cDatabase.h"
 #include "cSetup.h"
-//#include "cDHT.h"
-#include "cMqtt.h"
-//#include "cEnow.h"
+#include "cDHT.h"
+//#include "cMqtt.h"
+#include "cEnow.h"
 
 cLed* l ;
 
@@ -22,11 +22,12 @@ class cSetter : public cTimer {
 
 void setup() {
 	Serial.begin(115200);
-	Serial.println("start");
+//	Serial.println("start");
 //	newDHT22(4,"DHT") ;
-	newLed("LED");
+	newLed("LED1");
+	newHearbeat("HB");
 //	newClock("time");
-//	changeTopicName("test4");
+	changeTopicName("test4");
 //	new cSetter();
 
 /*

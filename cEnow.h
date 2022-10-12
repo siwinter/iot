@@ -79,12 +79,6 @@ class cNowChannel : public cChannel {
 		else {
 			failure = failure + 1 ; 
 			sendNow();} }
-	
-	void subscribe(char* topic) {
-//		Serial.println("cNowChannel.subscribe");
-		char m[cTopicLen] = "sbs/" ;
-		strcat(m, topic) ;
-		sendMsg(m, ""); }
 		
 	void sendMsg(char* topic, char* info) {
 //		Serial.println("cNowChannel.sendMsg");

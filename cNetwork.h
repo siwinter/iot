@@ -22,23 +22,37 @@ class cCmdInterface {
   public :
 	cCmdInterface() { theDevices.append(this); }
 	virtual bool receiveCmd(char* name, char* info) = 0 ; } ;
-//####################################### cChannel ########################################
 
+//######################################## cNode ##########################################
 class cNode {
   public:
-	cNode(char* n) {
-		int i ;
-		for(i=0; i<cNodeNameLen; i++) {
-			if (n[i] == '/') return;
-			name[i] = n[i]; }
-		name[i] = 0 ; }
-
+	cNode() { name[0] = 0;}
+	cNode(char* topic) {
+		int i=4; int j=0;
+		while ( (topic[i] != '/') && (i<cTopicLen) ) name[j++] = topic[i++] ;
+		name[j]=0; 
+		Serial.println(name);}
+		
+	bool isNode(char* topic) {
+		int i;
+		for (i=0;i<strlen(name);i++) if(topic[4+i] != name[i]) return false;
+		if(topic[4+i] != '/') return false ;
+		return true ; }
+		
 	char name[cNodeNameLen]; } ;
 
+//####################################### cChannel ########################################
 class cChannel : public cObserved {
   private :
 	tList<tLink<cNode>, cNode>  myNodes ;	// Liste der Nodes für die der Channel zuständig ist
 
+	 cNode* findNode(char* topic) {
+		cNode* n = myNodes.readNext(NULL);
+		while(n != NULL) {
+			if ( n->isNode(topic) ) return n;
+			n = myNodes.readNext(n) ;}
+		return n ; }
+	
 	bool isConnected = false;
 	
 	int localCmd(char* topic) {				// cmd/nodeName/deviceName
@@ -48,49 +62,43 @@ class cChannel : public cObserved {
 		int i ;
 		for (i=0; i<nameLength; i++) { if(t[i] != theNodeName[i]) return 0; }
 		return (i + 4); }
-		
-	void storeNodeName(char* t) {			// t: nodeName/#
-		cNode* n = new cNode(t) ;				// s.w. Doppeleinträge werden hier nicht verhindert !!!
-		myNodes.insert(n); }
-			
-	bool checkNodeName(char* t) { return true ; }
+
   public :
-	virtual void subscribe(char* topic)  = 0 ;  // topic = cmd/nodename/#
+	char topic[cTopicLen] ;
+	char info[cInfoLen] ;
+
+	virtual void connected(){}
 	virtual void sendMsg(char* topic, char* info) = 0;
+
+	virtual void sendEvent(char* topic, char* info) {		// cMqttChannel overrides this Method
+		topic[0] = 'e';
+		sendMsg(topic, info) ; }
+		
 	virtual bool sendComand(char* topic, char* info) {
-		if (checkNodeName(topic)) {
+		if (findNode(topic) != NULL) {
 			sendMsg(topic, info) ;
 			return true ; }
 		return false ;}
-
+		
+	void resetNodeList() {
+		cNode* n = myNodes.getFirst();
+		while (n != NULL) {
+			delete n ;
+			myNodes.getFirst(); } }
+			
 	cChannel(bool upstream) {
 		if (upstream) theChannels.insert(this) ; 
 		else theChannels.append(this) ;} // wird vorn in die Liste eingetragen und wird dadurch zum upstream-Channel	
 	
-	char topic[cTopicLen] ;
-	char info[cInfoLen] ;
-				
-	void upstreamActive() {
-		if ( theChannels.readNext(NULL) == this ) {
-			char sbsTxt[cTopicLen] ;
-			strcpy(sbsTxt, "cmd/");
-			strcat(sbsTxt, theNodeName); 
-			strcat(sbsTxt, "#"); 
-			subscribe(sbsTxt); 
-			fireEvent(val_connected) ; } }
-
-	void connected() {
-		isConnected = true ;
-		if (strlen(theNodeName) > 0) upstreamActive() ; }
-
-	void nameChanged() {
-		if (isConnected) upstreamActive() ; }
-
 	void received() {
 //		Serial.print("received ");
 		if ((topic[0]=='e')&&(topic[1]=='v')&&(topic[2]=='t')&&(topic[3]=='/')) { // topic; evt/nodeName/deviceName
 //			Serial.println("evt");
-			theChannels.getNext(NULL)->sendMsg(topic, info) ;
+			cChannel* upstreamChannel = theChannels.getNext(NULL) ;
+			if (findNode(topic) == NULL) {
+				myNodes.insert(new cNode(topic)) ;
+				topic[0] = 'n';	}					// Mqtt-channel will subscribe topic
+			upstreamChannel->sendEvent(topic, info) ;
 			return ; } 
 		if ((topic[0]=='c')&&(topic[1]=='m')&&(topic[2]=='d')&&(topic[3]=='/')) { // topic: cmd/nodeName/deviceName
 //			Serial.println("cmd");
@@ -107,12 +115,8 @@ class cChannel : public cObserved {
 				while (channel != NULL) {
 					if (channel->sendComand(topic, info)) return ;
 					channel = theChannels.getNext(channel) ; } }
-			return;}
-		if ((topic[0]=='s')&&(topic[1]=='b')&&(topic[2]=='s')&&(topic[3]=='/')) { // topic: sbs/nodeName/#
-//			Serial.println("sbs");
-			theChannels.getNext(NULL)->subscribe(topic + 4) ;
-			storeNodeName(topic + 4) ;
-			return ; } } };
+			return;} } };
+			
 //##################################### cNodeName ########################################
 class cNodeName : public cConfig {
   public :
@@ -120,7 +124,7 @@ class cNodeName : public cConfig {
 		if (strcmp(key, "node") == 0) {
 			strcpy(theNodeName,value);
 			strcat(theNodeName,"/");
-			theChannels.readNext(NULL)->nameChanged();
+			theChannels.readNext(NULL)->connected();
 			return true ; }
 		return false ; } } ;
 
@@ -130,15 +134,14 @@ void changeTopicName(char* t) { theNode.configure("node", t, strlen(t)); }
 //################################### cSerialChannel #####################################
 class cSerialChannel : public cChannel, public cLooper {
   private :
-    uint8_t receiving = 0 ;
+    uint8_t receiving = 0 ;  // 0=idle, 1=receiving topicf
     int msgIndex ;
     int maxLen ;
 	char* buf ;
   public:
 	bool active ;
 	cSerialChannel() : cChannel(true) {		// insert as upstream (may be changed by next channel)  
-		Serial.begin(115200); 
-		connected(); }
+		Serial.begin(115200); }
 	
     void onLoop() {
 		char c;
@@ -170,10 +173,6 @@ class cSerialChannel : public cChannel, public cLooper {
 			  default :
 				if (receiving > 0 ) buf[msgIndex++] = c ;} } }
 
-	void subscribe(char* topic) {
-		Serial.print(">sbs/");
-		Serial.println(topic); }
-		
 	void sendMsg(char* topic, char* info) {
 		Serial.print(">");
 		Serial.print(topic) ;

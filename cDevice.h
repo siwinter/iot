@@ -53,6 +53,27 @@ class cCallBackAdapter : public cObserver {
 
 //######################################################################
 
+class cHeartbeat : public cDevice, cTimer {
+  private :
+	uint8_t v ;
+  public :
+	cHeartbeat() {
+		v=0;
+		setTimer(5);}
+	void onTimeout() {
+		Serial.println("cHeartbeat.onTimeout");
+		setValue(v++);
+		setTimer(60); } };
+
+//######################################################################
+
+cHeartbeat* newHearbeat(cb_function  f) {
+	cHeartbeat* d =new cHeartbeat() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
+//######################################################################
+
 class cButton : public cDevice, cLooper {
   private:
     int pin ;

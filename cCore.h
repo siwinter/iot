@@ -32,6 +32,7 @@ class tList {
 	Tl* anchor;
 	Tl* index ;
 	Tl* emptyChain ;
+	int i;
 	
 	Tl * newLink() {
 		if (emptyChain == NULL ) return new Tl() ;
@@ -69,8 +70,10 @@ class tList {
 			
 	Te* getFirst() {
 		if (anchor != NULL) {
+			Tl* l = anchor ;
 			Te* e = anchor->element ;
 			anchor = anchor->next ;
+			returnLink(l);
 			return e ; }
 		else return NULL; }
 	
@@ -115,7 +118,7 @@ tList<tLink<cTimer>, cTimer>  theTimers ;
 
 class cTimer {
   public:
-	unsigned long timeToExpire ;
+	uint64_t timeToExpire ;
 	virtual void onTimeout() = 0 ; 
 
 	cTimer() {timeToExpire = 0 ;}
@@ -124,12 +127,12 @@ class cTimer {
 		timeToExpire = 0 ;
 		theTimers.deleteElement(this); }
 
-	void setTimer(int t) {
+	void setTimer(uint32_t t) {
 		if (timeToExpire != 0) resetTimer() ;
 		timeToExpire = millis() + t*1000;
 		insertTimer() ;}
 
-	void setMillis(int t) {
+	void setMillis(uint32_t t) {
 		if (timeToExpire != 0) resetTimer() ;
 		timeToExpire = millis() + t;
 		insertTimer() ;}

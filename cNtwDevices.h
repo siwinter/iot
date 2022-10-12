@@ -110,6 +110,10 @@ class cValueTranslator : public cTranslator {
   public :
 	cValueTranslator(int d) {decimals = d;} } ;
 
+cHeartbeat* newHearbeat(char*  n) {
+	cHeartbeat* d =new cHeartbeat() ;
+	new cTxtAdapter(new cValueTranslator(0), d, n);
+	return d ; }
 
 cButton* newButton(int p, bool ao, char*  n) {
 	cButton* d =new cButton(p, ao) ;
