@@ -270,10 +270,11 @@ class cLed : public cRelais, public cTimer {
 			  break ; } } } ;
 			  
 cLed* newLed(int p, bool ao, cb_function  f) {
-	cLed* d =new cLed(p, ao) ;
+	cLed* d = new cLed(p, ao) ;
 	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
 	return d ; }
 
+cLed* newLed(cb_function f) { return newLed(LED_BUILTIN,false,f);}
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
  *   Uhr

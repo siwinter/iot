@@ -1,6 +1,7 @@
 #ifndef NTWDEVICE_h
 #define NTWDEVICE_h
 
+#include "cDevice.h"
 
 class cTranslator {
   public:
@@ -35,7 +36,7 @@ class cTxtAdapter : public cCmdInterface , public cObserver {
 		format->int2str(info, c) ;
 		int l = strlen(theEvtTopic) ;
 		strcpy((theEvtTopic + l), deviceName);
-		theChannels.readNext(NULL)->sendMsg(theEvtTopic, info);
+		theChannels.readFirst()->sendMsg(theEvtTopic, info);
 		theEvtTopic[l] = 0 ; }
 	
 	bool receiveCmd(char* name, char* info) {

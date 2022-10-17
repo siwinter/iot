@@ -139,16 +139,7 @@ class cDatabase : public cTimer, public cConfigurator {
 		i; for (i=0; i<len; i++) data[i] = EEPROM.read(adr++) ;
 		data[i] = 0;
 		*dataLen = len ; 
-		return true; }
-		
-/*	void printEEPROM() {
-		int adr = 0 ;
-		Serial.print("EEPROM-length: "); Serial.println(lastAdr);
-		while (adr < lastAdr) {
-			Serial.print(adr) ; Serial.print(" : ");
-			for(int i=0; i<10; i++) {Serial.print(EEPROM.read(adr++)); Serial.print(","); } 
-			Serial.println();} } */
-			};
+		return true; } };
 
 cDatabase theDataBase;
 #endif    // no EEPROM available

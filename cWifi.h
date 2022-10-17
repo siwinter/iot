@@ -174,10 +174,10 @@ class cWeb : public cLooper, public cWebElement, public cObserver {
 		char u[20];
 		theWebServer.uri().toCharArray(u, 20) ;
 		theWebServer.sendContent(htmlHead);
-		cWebElement* e = theWebElements.getNext(NULL) ;
+		cWebElement* e = theWebElements.readFirst() ;
 		while(e!=NULL) {
 			if (e->handleElement(u)) break; 
-			e=theWebElements.getNext(e);}
+			e=theWebElements.readNext();}
 		theWebServer.sendContent("</head><body>");}
 		
 	bool handleElement() {

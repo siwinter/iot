@@ -3,6 +3,54 @@
 
 #include "cCore.h"
 
+//####################################### Helpers ########################################
+
+
+#if defined(WIFI_AV)
+
+char* ip2txt(const uint8_t* ip,char* t) {
+	char txt[17] ;
+	int j = 16 ;
+	txt[j--] = 0;
+	for (int i = 3 ; i >= 0 ; i--) {
+		uint8_t v = ip[i] ;
+		do {
+			txt[j--] = (char)(v%10 + '0') ;
+			v = v / 10 ; }	
+		while (v>0) ;
+		if (i>0) txt[j--] = '.' ;}
+	int i=0 ;
+	while(j<18) t[i++] = txt[++j] ;
+	return t ;}
+
+bool ip2Byte(char* txtIP, uint8_t* byteIP) {
+	bool result = false ;
+	int txtLen = strlen(txtIP) ;
+	if(txtLen < 16) {
+		result = true;
+		int txtIndex = 0;
+		int byteIndex = 0 ;
+		int byte = 0 ;
+		while((txtIndex <= txtLen)&&(byteIndex<5)&&result) {
+			int d=txtIP[txtIndex++];
+			if ((d>='0')&&(d<='9')) byte = byte*10 +(d-'0') ;
+			else if ((d=='.')||(d==0)) { 
+				if (byte<256) {
+					byteIP[byteIndex++] = byte;
+					byte = 0; }
+				else result = false; }
+		else result = false ;} 
+		if (byteIndex !=4 ) result = false; }
+	if (!result) for(int i=0 ; i<5 ; i++) byteIP[i] = 0 ;
+	return result ;}
+
+void printMac(uint8_t* mac) {
+	for(int i=0 ; i<6 ; i++) {
+		Serial.print(mac[i], HEX); if(i<5) Serial.print(":"); } }
+
+#endif
+
+
 #define cTopicLen 50
 #define cInfoLen 50
 #define cNameLen 20
@@ -47,10 +95,10 @@ class cChannel : public cObserved {
 	tList<tLink<cNode>, cNode>  myNodes ;	// Liste der Nodes für die der Channel zuständig ist
 
 	 cNode* findNode(char* topic) {
-		cNode* n = myNodes.readNext(NULL);
+		cNode* n = myNodes.readFirst();
 		while(n != NULL) {
 			if ( n->isNode(topic) ) return n;
-			n = myNodes.readNext(n) ;}
+			n = myNodes.readNext() ;}
 		return n ; }
 	
 	bool isConnected = false;
@@ -87,14 +135,14 @@ class cChannel : public cObserved {
 			myNodes.getFirst(); } }
 			
 	cChannel(bool upstream) {
-		if (upstream) theChannels.insert(this) ; 
-		else theChannels.append(this) ;} // wird vorn in die Liste eingetragen und wird dadurch zum upstream-Channel	
+		if (upstream) theChannels.insert(this) ; // wird vorn in die Liste eingetragen und wird dadurch zum upstream-Channel
+		else theChannels.append(this) ;} 	
 	
 	void received() {
 //		Serial.print("received ");
 		if ((topic[0]=='e')&&(topic[1]=='v')&&(topic[2]=='t')&&(topic[3]=='/')) { // topic; evt/nodeName/deviceName
 //			Serial.println("evt");
-			cChannel* upstreamChannel = theChannels.getNext(NULL) ;
+			cChannel* upstreamChannel = theChannels.readFirst() ;
 			if (findNode(topic) == NULL) {
 				myNodes.insert(new cNode(topic)) ;
 				topic[0] = 'n';	}					// Mqtt-channel will subscribe topic
@@ -105,16 +153,17 @@ class cChannel : public cObserved {
 			int devicePointer = 0;
 			if (devicePointer = localCmd(topic)) {
 				char* deviceName = topic + devicePointer;
-				cCmdInterface * d = theDevices.getNext(NULL) ;
+				cCmdInterface * d = theDevices.readFirst() ;
 				while (d != NULL) {
 					if (d->receiveCmd(deviceName, info)) return ;
-					d = theDevices.getNext(d) ; } }
+					d = theDevices.readNext(); } }
 			else {
 //				Serial.println("----> to first Channel ");
-				cChannel* channel = theChannels.getNext(theChannels.getNext(NULL)) ; //start with second Channel (= downstream-Channel)
+				cChannel* channel = theChannels.readFirst() ;
+				channel = theChannels.readNext() ; //start with second Channel (= downstream-Channel)
 				while (channel != NULL) {
 					if (channel->sendComand(topic, info)) return ;
-					channel = theChannels.getNext(channel) ; } }
+					channel = theChannels.readNext() ; } }
 			return;} } };
 			
 //##################################### cNodeName ########################################
@@ -124,7 +173,7 @@ class cNodeName : public cConfig {
 		if (strcmp(key, "node") == 0) {
 			strcpy(theNodeName,value);
 			strcat(theNodeName,"/");
-			theChannels.readNext(NULL)->connected();
+			theChannels.readFirst()->connected();
 			return true ; }
 		return false ; } } ;
 

@@ -18,30 +18,18 @@ extern "C" {
 
 #define cMacLen       6
 
-void printAmac(uint8_t* mac) {
-	for(int i=0 ; i<6 ; i++) {
-		Serial.print(mac[i], HEX); if(i<5) Serial.print(":"); } }
-
 class cMsg {
   public:
-	char buf[cTopicLen+cInfoLen];} ;
-
-class cMsgPool {
-  private :
-	tList<tLink<cMsg>, cMsg>  pool ;
-  public :
-	cMsg* newMsg() {
-		cMsg* m = pool.getFirst() ;
-		if (m != NULL) return m ;
-		m = new cMsg() ;
-		return m ; } 
-
-	void returnMsg(cMsg* m) { pool.insert(m) ; } } ;
-
-cMsgPool theMsgPool ;
+	char buf[cTopicLen+cInfoLen];
+	void write(char* topic, char* info) {
+		strcpy(buf, topic);
+		strcat(buf, ":");
+		strcat(buf, info); } } ;
 
 class cNowChannel;
 tList<tLink<cNowChannel>, cNowChannel>  nowChannels ;
+
+tList<tLink<cMsg>, cMsg>  theMsgPool ;
 
 class cNowChannel : public cChannel {
   private :	
@@ -49,7 +37,7 @@ class cNowChannel : public cChannel {
 	int failure;
   public :
 	uint8_t mac [cMacLen] ;
-	tList<tLink<cMsg>, cMsg>  msgs ;
+	 tList<tLink<cMsg>, cMsg> msgs ;
 	
 	cNowChannel(const uint8_t* m, uint8_t wifiChannel , bool upstream) : cChannel(upstream) {
 //		Serial.println("cNowChannel.constructor");
@@ -73,7 +61,8 @@ class cNowChannel : public cChannel {
 		busy = false ;
 		if ((sendOK) || (failure > 3)) {
 			if (failure >3 ) Serial.println("--> skip msg");
-			cMsg* m = msgs.getFirst();				// to delete first entry
+			tLink<cMsg> * mL = msgs.getNextLink(NULL);
+			theMsgPool.insertLink(mL);
 			failure = 0 ;
 			sendNow() ;}
 		else {
@@ -82,11 +71,14 @@ class cNowChannel : public cChannel {
 		
 	void sendMsg(char* topic, char* info) {
 //		Serial.println("cNowChannel.sendMsg");
-		cMsg* m = theMsgPool.newMsg() ;
-		strcpy(m->buf,topic);
-		strcat(m->buf, ":");
-		strcat(m->buf,info);
-		msgs.append(m) ;
+		tLink<cMsg> * mL = theMsgPool.getNextLink(NULL) ;
+		if (mL == NULL) {
+			cMsg* m = new cMsg() ;
+			m->write(topic, info) ;
+			msgs.append(m); }
+		else {
+			mL->element->write(topic, info) ;
+			msgs.appendLink(mL); }
 		if(!busy) {
 			failure = 0 ;
 			sendNow() ; } }
@@ -104,10 +96,10 @@ class cEspNow : public cConfig {
 	void registerCallbacks() ;
 	
 	cNowChannel* getChannel(uint8_t* mac , bool create) {
-		cNowChannel* c = nowChannels.readNext(NULL) ;
+		cNowChannel* c = nowChannels.readFirst() ;
 		while (c != NULL) {
 			if (macEquals(mac, c->mac)) return c ;
-			c = nowChannels.readNext(c) ;}
+			c = nowChannels.readNext() ;}
 		if ( create ) {
 			c = new cNowChannel(mac, wifiChannel, false) ; // is not upstream channel
 //			nowChannels.insert(c) ; 
@@ -175,7 +167,7 @@ cEspNow theEspNow ;
 void cNowChannel :: sendNow() {
 	Serial.println("cNowChannel.sendNow");
 	if (! busy) {
-		cMsg* m = msgs.readNext(NULL) ;
+		cMsg* m = msgs.readFirst() ;
 		if ( m != NULL) {
 			Serial.print("----> send ");Serial.print(m->buf);Serial.print(" to "); printMac(mac); Serial.println();
 			if (theEspNow.sendNow(mac, m->buf)) busy = true ; } } }

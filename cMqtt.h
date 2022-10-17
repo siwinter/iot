@@ -13,24 +13,6 @@
 #include "cWifi.h"
 #include "cDatabase.h"
 
-char* ip2txt(const uint8_t* ip,char* t) {
-//	Serial.println("ip2txt");
-	char txt[17] ;
-	int j = 16 ;
-	for (int i = 3 ; i >= 0 ; i--) {
-		uint8_t v = ip[i] ;
-		if (v == 0) txt[j--] = '0' ;
-		else 
-		while (v > 0) {
-			txt[j--] = (char)(v%10 + '0') ;
-			v = v / 10 ;  }
-		if (i>0) txt[j--] = '.' ; }
-	int i = 0;
-	while(j<17) t[i++] = txt[++j] ;
-	t[i] = 0 ; 
-	return t ;}
-	
-
 void mqttCallback(char* topic, byte* payload, unsigned int length) ;
 
 WiFiClient wifiClient;
@@ -92,10 +74,11 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
 				Serial.println("mqtt connected");
-				cChannel* c = theChannels.getNext(theChannels.getNext(NULL));
+				cChannel* c = theChannels.readFirst() ;
+				c = theChannels.readNext();
 				while(c != NULL) {
 					c->resetNodeList();	
-					c=theChannels.getNext(c); }
+					c=theChannels.readNext(); }
 				connected() ;
 				return true ;}
 			setTimer(5);
@@ -152,27 +135,6 @@ class cMqttWebsite : public cWebElement {
   public :
 	cMqttWebsite() : cWebElement("/setup") {}
 
-	bool ip2Byte(char* txtIP, uint8_t* byteIP) {
-		bool result = false ;
-		int txtLen = strlen(txtIP) ;
-		if(txtLen < 16) {
-			result = true;
-			int txtIndex = 0;
-			int byteIndex = 0 ;
-			int byte = 0 ;
-			while((txtIndex <= txtLen)&&(byteIndex<5)&&result) {
-				int d=txtIP[txtIndex++];
-				if ((d>='0')&&(d<='9')) byte = byte*10 +(d-'0') ;
-				else if ((d=='.')||(d==0)) { 
-					if (byte<256) {
-						byteIP[byteIndex++] = byte;
-						byte = 0; }
-					else result = false; }
-				else result = false ;} 
-			if (byteIndex !=4 ) result = false; }
-		if (!result) for(int i=0 ; i<5 ; i++) byteIP[i] = 0 ;
-		return result ;}
-	
 	void newBroker(uint8_t* ip, uint16_t port) {
 //		Serial.print("MQTT : newBroker : ");
 //		for (int i=0; i<4; i++) {Serial.print(ip[i]); Serial.print("."); }

@@ -20,9 +20,6 @@
  * 
  */
 
-void printMac(uint8_t* mac) {
-	for(int i=0 ; i<6 ; i++) {
-		Serial.print(mac[i], HEX); if(i<5) Serial.print(":"); } }
 
 void printIP(uint8_t* ip) {
 	for(int i=0 ; i<4 ; i++) {
