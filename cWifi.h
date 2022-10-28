@@ -78,7 +78,7 @@ class cWebElement {
 #include <WiFi.h>
 #endif
 #include "cDevice.h"
-
+#include "cDatabase.h"
 
 class cWifi : public cTimer, public cDevice, public cConfig {
   private :
@@ -102,7 +102,7 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 //		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
 		WiFi.begin(stationSsid, stationPwd); }
 
-	bool configure(char* key, char* value, int vLen) {
+	bool configure(const char* key, char* value, int vLen) {
 //		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
 		if (strcmp(key, "ssid") == 0) {
 			strcpy(stationSsid, value);
@@ -124,13 +124,16 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
 			WiFi.softAP("newIoT");
+//			Serial.print("cWiFi new softAP: "); Serial.println("newIoT");
 			setValue(val_wifiAP); } }
 			
 	void onGotIP(){
 //		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
 		setValue(val_on);}
 
-	void onConnected(){ } } ;
+	void onConnected(){ 
+//		Serial.println("cWiFi.onConnected");
+} } ;
 			
 cWifi theWifi ;
 #if defined(ESP8266)

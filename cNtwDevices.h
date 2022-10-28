@@ -2,6 +2,7 @@
 #define NTWDEVICE_h
 
 #include "cDevice.h"
+#include "cNetwork.h"
 
 class cTranslator {
   public:
@@ -22,7 +23,7 @@ class cTxtAdapter : public cCmdInterface , public cObserver {
 //		theDevices.append(this);
 	}
 
-	cTxtAdapter(cTranslator* sf, cDevice* d, char* n) {
+	cTxtAdapter(cTranslator* sf, cDevice* d, const char* n) {
 		device = d;
 		device->addObserver(this);
 		strcpy(deviceName, n);
@@ -32,6 +33,7 @@ class cTxtAdapter : public cCmdInterface , public cObserver {
 	void doComand(char* cmd) { device->doComand(format->str2int(cmd)) ; }
 	
 	void onEvent(int i, int c) {
+//		Serial.println("cTxtAdapter.onEvent");
 		char info[cInfoLen] ;
 		format->int2str(info, c) ;
 		int l = strlen(theEvtTopic) ;
@@ -43,10 +45,6 @@ class cTxtAdapter : public cCmdInterface , public cObserver {
 		if ( strcmp(deviceName, name) != 0 ) return false ;
 		doComand(info) ;
 		return true ;} };
-
-//void cTxtAdapter :: onEvent(int i, int c)
-
-
 
 class cStateTranslator : public cTranslator {
 	char* int2str(char* s, int i) {
@@ -71,11 +69,6 @@ class cStateTranslator : public cTranslator {
 		if (strcmp(s, "toggle") == 0) return cmd_toggle ;
 		if (strcmp(s, "blink") == 0) return cmd_blink ; 
 		return 99 ;} ; } ;
-/*
-class cValueTranslator : public cTranslator {
-	char* int2str(char* s, int v) { return s ;}
-	int str2int(char* s) {return 2;} };	
-*/
 
 class cValueTranslator : public cTranslator {
 	char* int2str(char* s, int v) {
@@ -111,75 +104,82 @@ class cValueTranslator : public cTranslator {
   public :
 	cValueTranslator(int d) {decimals = d;} } ;
 
-cHeartbeat* newHearbeat(char*  n) {
+cHeartbeat* newHearbeat(const char*  n) {
 	cHeartbeat* d =new cHeartbeat() ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 
-cButton* newButton(int p, bool ao, char*  n) {
+cButton* newButton(int p, bool ao,const char*  n) {
 	cButton* d =new cButton(p, ao) ;
 	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 	
-cPoti* newPoti(int p, char* n) {
+cPoti* newPoti(int p,const char* n) {
 	cPoti* d =new cPoti(p) ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ;}
 
-cLatch* newLatch(int sp, int rp,  char*  n) {
+cLatch* newLatch(int sp, int rp, const char*  n) {
 	cLatch* d =new cLatch(sp, rp) ;
 	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
-cRelais* newRelais(int p, bool ao, char*  n) {
+cRelais* newRelais(int p, bool ao, const char*  n) {
 	cRelais* d =new cRelais(p, ao) ;
 	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
-cLed* newLed(int p, bool ao, char*  n) {
+cLed* newLed(int p, bool ao, const char*  n) {
 	cLed* d =new cLed(p, ao) ;
 	new cTxtAdapter(new cStateTranslator(), d, n);
 	return d ; }
 
-cLed*newLed(char* n) {
+cLed*newLed(const char* n) {
 	return newLed(LED_BUILTIN, !digitalRead(LED_BUILTIN), n) ;}
 
-cClock* newClock(char* n) {
+cClock* newClock(const char* n) {
 	cClock* d =new cClock() ;
 	new cTxtAdapter(new cValueTranslator(2), d, n);
 	return d ; }
 	
 #if defined(ESP8266)
-cHzMesser* newHzM(int p, char* n) {
+cHzMesser* newHzM(int p, const char* n) {
 	cHzMesser* d =new cHzMesser(p) ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 
-cVcc* newVcc(char* n) {
+cVcc* newVcc( const char* n) {
 	cVcc* d = new cVcc() ;
 	new cTxtAdapter(new cValueTranslator(2), d, n);
 	return d ; }
 /*	
 #include "cWifi.h" 
-cRssi* newRssi(char* n) {
+cRssi* newRssi(const char* n) {
 	cRssi* d = new cRssi() ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 */
-cHeap* newHeap(char* n) {
+cHeap* newHeap(const char* n) {
 	cHeap* d = new cHeap() ;
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 #endif
 
-cUltraSonicSensor* newUSS(int t, int e, char* n) {
+#if defined(ARDUINO_GENERIC_RP2040)
+cPicoTmp* newPicoTmp(const char* n) {
+	cPicoTmp* d = new cPicoTmp() ;
+	new cTxtAdapter(new cValueTranslator(1), d, n);
+	return d ; }
+#endif
+
+cUltraSonicSensor* newUSS(int t, int e, const char* n) {
 	cUltraSonicSensor* d =new cUltraSonicSensor(t, e);
 	new cTxtAdapter(new cValueTranslator(0), d, n);
 	return d ; }
 
 #include "cDHT.h"
 
-cDHT22* newDHT22(int p, char* n) {
+cDHT22* newDHT22(int p, const char* n) {
 	cDHT22* d =new cDHT22(p) ;
 	char txt[20] ;
 	strcpy(txt, "tmp");
@@ -191,7 +191,7 @@ cDHT22* newDHT22(int p, char* n) {
 	return d ;}
 
 #include "cBME280.h"
-cBME280* newBME280(char* n) {
+cBME280* newBME280(const char* n) {
 	cBME280* d =new cBME280() ;
 	char txt[20] ;
 	strcpy(txt, "tmp");

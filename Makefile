@@ -15,11 +15,10 @@
 # this project. Alernately you can use a 'board.mk' file to specifytails
 #########################################################################
 
-#BOARD = arduino:avr:pro:cpu=8MHzatmega328                              # Arduino Pro or Pro Mini (ATmega328 /8MHz)
 BOARD = esp8266:esp8266:d1
 #BOARD = Besp8266:esp8266:generic										# ESP-01
-#BOARD = esp32:esp32:esp32:CPUFreq=240,FlashMode=qio,UploadSpeed=921600 # ESP32
-#BOARD = rp2040:rp2040:generic
+#BOARD = "esp32:esp32:esp32doit-devkit-v1"								# ESP32 DEVKITV1
+#BOARD = rp2040:rp2040:generic											# raspberry pico
 #BOARD = "LGT8fx Boards:avr:328:variant=modelP_SSOP20"
 #BOARD = esp8266:esp8266:d1_mini:baud=921600
 #BOARD = esp32:esp32:d1_mini32
@@ -29,6 +28,8 @@ BOARD = esp8266:esp8266:d1
 #BOARD = arduino:avr:nano:cpu=atmega328                                 # Arduino Nano
 #BOARD = esp8266:esp8266:nodemcuv2:baud=460800                          # NodeMCU/ESP8266
 #BOARD = esp8266:esp8266:d1_mini:baud=921600                            # Wemos D1 Mini
+#BOARD = esp32:esp32:esp32:CPUFreq=240,FlashMode=qio,UploadSpeed=921600 # ESP32
+#BOARD = arduino:avr:pro:cpu=8MHzatmega328                              # Arduino Pro or Pro Mini (ATmega328 /8MHz)
 
 PORT = /dev/ttyUSB0
 #PORT = /dev/ttyUSB1

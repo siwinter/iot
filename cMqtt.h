@@ -27,15 +27,8 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 
 	void getMAC() {
 		uint8_t  mac[6] ;
-		WiFi.macAddress(mac) ;	
-		for(int i=0; i<6; i++) {
-			uint8_t h = mac[i]/16 ;
-			if (h>9) macAdr[i*2] = h - 10 + 'A' ;
-			else macAdr[i*2] = h + '0' ;
-			h = mac[i] % 16 ;
-			if (h>9) macAdr[i*2+1] = h - 10 + 'A' ;
-			else macAdr[i*2+1] = h + '0' ; }
-		macAdr[12] = 0 ; }
+		WiFi.macAddress(mac) ;
+		mac2txt(mac, macAdr) ; }
 		
 	void connected(){
 		char info[cInfoLen] ;
@@ -54,8 +47,8 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		wifiEvent =theWifi.addObserver(this);
 		getMAC() ; }
 
-	bool configure(char* key, char* value, int vLen) {
-//		Serial.print("cMqtt key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
+	bool configure(const char* key, char* value, int vLen) {
+		Serial.print("cMqtt key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
 		if (strcmp(key, "broker") == 0) {
 			brokerPort = value[4]*256 + value[5] ;
 			brokerIp = IPAddress(value[0], value[1], value[2], value[3]) ;
@@ -69,7 +62,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			if (evt == val_on) reconnect() ; } } 
 		
 	bool reconnect() {
-//		Serial.println("mqtt reconnect");
+		Serial.println("cMqtt.reconnect");
 		if (!client.connected()) {
 			client.setServer(brokerIp, brokerPort);
 			if (client.connect(macAdr)) {
@@ -85,7 +78,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 			return false ; }
 		return true ; }
 
-	void sendMsg(char* topic, char* info) { 
+	void sendMsg(char* topic, char* info) {
 		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
 		client. publish(topic, info); }
 
@@ -104,10 +97,12 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 	bool sendComand(char* topic, char* info) {return false ; }	// mqtt always upstream never forwards cmd-message
 
 	void subscribe(char* topic) { 
-		Serial.print("cMqtt.subscribe "); Serial.println(topic);
+//		Serial.print("cMqtt.subscribe "); Serial.println(topic);
 		client.subscribe(topic) ;}
 
-	void onTimeout() { reconnect() ; }
+	void onTimeout() {
+//		Serial.println("cMqtt.onTimeout");
+		reconnect() ; }
 
 	void onLoop() { client.loop() ; } };
 

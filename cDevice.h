@@ -12,6 +12,7 @@ class cDevice : public cObserved{
 	cDevice(cObserver* o) : cObserved(o) { };
 	virtual void doComand(int cmd) {} ;
     void setValue(int v) {
+//		Serial.println("-->setValue") ;
 		value = v ;
 		fireEvent(v) ; }
 		
@@ -59,11 +60,11 @@ class cHeartbeat : public cDevice, cTimer {
   public :
 	cHeartbeat() {
 		v=0;
-		setTimer(5);}
+		setTimer(2);}
 	void onTimeout() {
-		Serial.println("cHeartbeat.onTimeout");
+//		Serial.println("cHeartbeat.onTimeout");
 		setValue(v++);
-		setTimer(60); } };
+		setTimer(2); } };
 
 //######################################################################
 
@@ -236,6 +237,9 @@ cRelais* newRelais(int p, bool ao, cb_function  f) {
  *
  * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
+#ifndef LED_BUILTIN
+#define LED_BUILTIN 2
+#endif
 class cLed : public cRelais, public cTimer {
   private:
     uint16_t interval ;
@@ -254,7 +258,7 @@ class cLed : public cRelais, public cTimer {
 			setTimer(interval); } }
 
     void doComand(int cmd) {
-//		Serial.println("onComand");
+//		Serial.println("cLed.onComand");
 		switch (cmd) {
 			case cmd_on :
 			  setOn() ;
@@ -398,7 +402,54 @@ cHeap* newHeap(cb_function  f) {
 	return d ; }
 
 #endif
+/* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * 
+ *	Internal Sensor Betriebstemperatur
+ * 
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
+#if defined(ARDUINO_GENERIC_RP2040)
+class cPicoTmp : public cIntervalSensor {
+  public :
+    cPicoTmp() {
+		setInterval(30); }
+    void measure(){
+		int16_t t=(int)(analogReadTemp()*10) ;
+		setValue(t); } } ;
+
+cPicoTmp* newPicoTmp(cb_function  f) {
+	cPicoTmp* d =new cPicoTmp() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
+#endif
+#if defined(ESP32)
+#ifdef __cplusplus
+extern "C" {
+#endif
+uint8_t temprature_sens_read();
+#ifdef __cplusplus
+}
+#endif
+
+class cHall : public cIntervalSensor {
+  public :
+    cHall() {
+		setInterval(2); }
+    void measure(){
+		int h = hallRead(); ;
+		Serial.print("Hall: "); Serial.println(h);
+//		setValue(t);
+		 } } ;
+
+cHall* newHall(cb_function  f) {
+	cHall* d =new cHall() ;
+	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+	return d ; }
+
+#endif
+
+//uint8_t temprature_sens_read();
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
  *  Ein Ultraschallsensor, der den Abstand zwischen Sensor und z.B. einer Flüssigkeitsoberfläche misst.

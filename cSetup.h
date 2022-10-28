@@ -9,6 +9,7 @@
  * 
  * >cmd/<nodeName>/setup:<Kommando>;<Parameter>
  * 
+ * >cmd/<nodeName>/setup:info  gibt den Informatioenen über den Prozessor aus (Type, MAC-Adr., IP-Adr ...)d
  * >cmd/<nodeName>/setup:print  gibt den Inhalt des Speichers auf der seriellen Schnittstelle aus
  * >cmd/<nodeName>/setup:delete;<key> löscht eine Eintrag
  * >cmd/<nodeName>/setup:<key>;<value> erzeugt oder ändert einen Eintrag
@@ -20,6 +21,7 @@
  * 
  */
 
+#include "cDatabase.h"
 
 void printIP(uint8_t* ip) {
 	for(int i=0 ; i<4 ; i++) {
@@ -63,6 +65,7 @@ void printDataBase() {
 	char key[20] ;
 	char data[20] ;
 	int dataLen ;
+	Serial.println("EEPROM Inhalt") ;
 	while ( theDataBase.getData(i++, key, data, &dataLen)) {
 		Serial.print(dataLen);Serial.print("\t");Serial.print(key);Serial.print("\t");
 		if (strcmp("mac", key) == 0) { printMac((uint8_t*)data); Serial.println() ; }
@@ -103,6 +106,15 @@ class cSetup : public cCmdInterface {
 			uint8_t mac[6];
 			if ( txt2Mac(param, mac) ) theDataBase.setData("mac", (char*)mac , 6) ;
 			return true ;}
+		if ( strcmp("info", info) == 0 ) {
+			Serial.println("ESP32") ;
+			uint8_t mac[6];
+			WiFi.macAddress(mac) ;
+			Serial.print("MAC:\t"); printMac(mac); Serial.println();
+			uint32_t ip = WiFi.localIP() ;
+			Serial.print("IP:\t"); printIP((uint8_t*)(&ip)); Serial.println();
+			return true ;}
+			
 		theDataBase.setData(info, param, strlen(param)) ;
 		return true ;} };
 

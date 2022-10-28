@@ -66,7 +66,6 @@ class cDatabase : public cTimer, public cConfigurator {
 			nextAdr = 3;
 			setMillis(1) ;
 			return ;}
-//		delay (100);
 //		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
 		char key[30] ;
 		char value[30] ;

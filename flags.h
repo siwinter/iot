@@ -27,4 +27,7 @@
 #define EEPROM_AV		// EEPROM available
 #endif
 
+#if defined(ARDUINO_GENERIC_RP2040)  // raspberry pico
+#endif
+
 #endif

@@ -93,10 +93,16 @@ class tList {
 		Te* e = actualLink->element;
 		actualLink =actualLink->next ;
 		return e ;}
-
+/*
 	Tl* getNextLink(Tl* l) {
 		if (l == NULL ) return anchor ;
-		return l->next ; } };
+		return l->next ; }
+*/
+	Tl* getFirstLink() {
+		if (anchor == NULL) return NULL ;
+		Tl* l = anchor ;
+		anchor = l->next ;
+		return l ; } };
 
 //####################################### cLooper ######################################## 
 
@@ -203,8 +209,8 @@ cConfigurator* theConfigurator = NULL ;
 class cConfig {
   public:
 	cConfig() { theConfigs.insert(this); }
-	virtual bool configure(char* key, char* value, int vLen = 0) {return false;} } ;
-
+	virtual bool configure(const char* key, char* value, int vLen = 0) = 0 ;} ;
+	
 class cConfigurator {
   protected:	
 	void configure(char* key, char* value, int vLen = 0) {
@@ -217,6 +223,7 @@ class cConfigurator {
 	virtual void setConfig(char* key, char* value, int len=0) = 0 ;} ;
 	
 //##################################### systemLoop ####################################### 
+
 void systemLoop() {
 	cLooper* l = theLoopers.readFirst() ;
 	while ( l != NULL) {

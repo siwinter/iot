@@ -4,10 +4,12 @@
 #include "cCore.h"
 
 //####################################### Helpers ########################################
-
-
-#if defined(WIFI_AV)
-
+#if defined(ESP8266) || defined(ESP32)
+#if defined(ESP8266)
+#include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 char* ip2txt(const uint8_t* ip,char* t) {
 	char txt[17] ;
 	int j = 16 ;
@@ -44,12 +46,27 @@ bool ip2Byte(char* txtIP, uint8_t* byteIP) {
 	if (!result) for(int i=0 ; i<5 ; i++) byteIP[i] = 0 ;
 	return result ;}
 
+
+char* mac2txt(const uint8_t* mac, char* t) {
+	for(int i=0; i<6; i++) {
+		uint8_t h = mac[i]/16 ;
+		if (h>9) t[i*2] = h - 10 + 'A' ;
+		else t[i*2] = h + '0' ;
+		h = t[i] % 16 ;
+		if (h>9) t[i*2+1] = h - 10 + 'A' ;
+		else t[i*2+1] = h + '0' ; }
+	t[12] = 0 ; 
+	return t; }
+
+
 void printMac(uint8_t* mac) {
 	for(int i=0 ; i<6 ; i++) {
 		Serial.print(mac[i], HEX); if(i<5) Serial.print(":"); } }
 
+char* getMAC() {
+	uint8_t  mac[6] ;
+	WiFi.macAddress(mac); }
 #endif
-
 
 #define cTopicLen 50
 #define cInfoLen 50
@@ -62,7 +79,7 @@ tList<tLink<cCmdInterface>, cCmdInterface>  theDevices ;
 class cChannel ;
 tList<tLink<cChannel>, cChannel>  theChannels ;
 
-char theEvtTopic[cTopicLen] = "evt/";
+char theEvtTopic[cTopicLen] = "evt/./";
 char* theNodeName = theEvtTopic + 4;
 
 //#################################### cCmdInterface ##################################### 
@@ -78,8 +95,7 @@ class cNode {
 	cNode(char* topic) {
 		int i=4; int j=0;
 		while ( (topic[i] != '/') && (i<cTopicLen) ) name[j++] = topic[i++] ;
-		name[j]=0; 
-		Serial.println(name);}
+		name[j]=0; }
 		
 	bool isNode(char* topic) {
 		int i;
@@ -169,8 +185,10 @@ class cChannel : public cObserved {
 //##################################### cNodeName ########################################
 class cNodeName : public cConfig {
   public :
-	bool configure(char* key, char* value, int vLen) {
+	bool configure(const char* key, char* value, int vLen) {
+//		Serial.print("cNodeName.configure: "); Serial.println(key);
 		if (strcmp(key, "node") == 0) {
+//			Serial.print("node: "); Serial.println(value);
 			strcpy(theNodeName,value);
 			strcat(theNodeName,"/");
 			theChannels.readFirst()->connected();
@@ -187,6 +205,7 @@ class cSerialChannel : public cChannel, public cLooper {
     int msgIndex ;
     int maxLen ;
 	char* buf ;
+	uint32_t x=0;
   public:
 	bool active ;
 	cSerialChannel() : cChannel(true) {		// insert as upstream (may be changed by next channel)  

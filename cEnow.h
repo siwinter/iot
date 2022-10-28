@@ -15,6 +15,7 @@ extern "C" {
 }
 #endif
 #include "cNetwork.h"
+//#include "cWifi.h"
 
 #define cMacLen       6
 
@@ -33,45 +34,45 @@ tList<tLink<cMsg>, cMsg>  theMsgPool ;
 
 class cNowChannel : public cChannel {
   private :	
-	bool busy;
-	int failure;
+	int busy;
+	
+	void msgDone() {
+		tLink<cMsg> * mL = msgs.getFirstLink();
+		theMsgPool.insertLink(mL);
+		busy = 0 ; }
+
   public :
 	uint8_t mac [cMacLen] ;
 	 tList<tLink<cMsg>, cMsg> msgs ;
 	
 	cNowChannel(const uint8_t* m, uint8_t wifiChannel , bool upstream) : cChannel(upstream) {
 //		Serial.println("cNowChannel.constructor");
-		busy = false;
-		failure = 0;
+		busy = 0;
 		for (int i=0 ; i<cMacLen ; i++) mac[i] = m[i] ; 
 #if defined(ESP8266)
-		esp_now_add_peer(mac, ESP_NOW_ROLE_COMBO, wifiChannel, NULL, 0);
+		if ( esp_now_add_peer(mac, ESP_NOW_ROLE_COMBO, wifiChannel, NULL, 0) != 0) Serial.println("Pair failed");
 #else
 		esp_now_peer_info_t peer;
 		memset(&peer, 0, sizeof(peer));
 		for (int i=0;i<6; i++)peer.peer_addr[i] = mac[i];
 		peer.channel = wifiChannel;
 		peer.encrypt = false;
-		esp_now_add_peer(&peer); 
+		if ( esp_now_add_peer(&peer) != ESP_OK) Serial.println("Pair failed");
 #endif
 		nowChannels.insert(this) ; }
 	
 	void onSendResult(bool sendOK) {
 //		Serial.println("cNowChannel.onSendResult");
-		busy = false ;
-		if ((sendOK) || (failure > 3)) {
-			if (failure >3 ) Serial.println("--> skip msg");
-			tLink<cMsg> * mL = msgs.getNextLink(NULL);
-			theMsgPool.insertLink(mL);
-			failure = 0 ;
+		if ((sendOK) || (busy > 4)) {
+//			Serial.println("--->okay");
+			if (busy >4 ) Serial.println("--> skip msg");
+			msgDone() ;
 			sendNow() ;}
-		else {
-			failure = failure + 1 ; 
-			sendNow();} }
+		else sendNow(); }
 		
 	void sendMsg(char* topic, char* info) {
 //		Serial.println("cNowChannel.sendMsg");
-		tLink<cMsg> * mL = theMsgPool.getNextLink(NULL) ;
+		tLink<cMsg> * mL = theMsgPool.getFirstLink() ;
 		if (mL == NULL) {
 			cMsg* m = new cMsg() ;
 			m->write(topic, info) ;
@@ -79,21 +80,27 @@ class cNowChannel : public cChannel {
 		else {
 			mL->element->write(topic, info) ;
 			msgs.appendLink(mL); }
-		if(!busy) {
-			failure = 0 ;
-			sendNow() ; } }
-			
-	void sendNow() ;}; 
+		if(busy == 0) {
+			if ( sendNow() == false) {
+				Serial.println("cNowChannel.sendMsg internal error");
+			} 
+		}
+	};
 
-class cEspNow : public cConfig {
+			
+	bool sendNow() ;}; 
+
+//####################################### cEspNow ######################################## 
+class cEspNow : public cConfig, public cTimer {
   private:
-	bool ready ;
+	uint8_t state ;
+//	bool ready ;
 	uint8_t wifiChannel;
 	
 	bool macEquals(const uint8_t*m1, const uint8_t*m2) {
 		for (int i=0 ; i<cMacLen ; i++) if(m1[i] != m2[i]) return false ;
 		return true ; }
-	void registerCallbacks() ;
+	void initNow() ;
 	
 	cNowChannel* getChannel(uint8_t* mac , bool create) {
 		cNowChannel* c = nowChannels.readFirst() ;
@@ -108,22 +115,20 @@ class cEspNow : public cConfig {
 
   public:
 	cEspNow() {
-		ready = true ;
-		WiFi.mode(WIFI_AP_STA);
-		WiFi.disconnect();
+		state = 0 ;
 		wifiChannel = 0 ;
-		if (esp_now_init() != 0) ESP.restart();
-#if defined(ESP8266)
-		esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
-#endif
-		registerCallbacks() ; }
+		setMillis(1) ; } ;
+		
+	void onTimeout() { initNow() ; }
 	
-	bool configure(char* key, char* value, int vLen) {
+	bool configure(const char* key, char* value, int vLen) {
+//		Serial.print("cEspNow.configure: "); Serial.println(key);
+		initNow() ;
 		if (strcmp(key, "mac") == 0) {
-//			Serial.print("cEspNow.configure destMAC "); Serial.print(": "); printAmac((uint8_t*)value);
+//			Serial.print("cEspNow.configure destMAC: "); printMac((uint8_t*)value);
 			cNowChannel* nowChannel = new cNowChannel((uint8_t*)value, wifiChannel, true) ;
 			nowChannel->connected() ;
-			ready = true ;
+			state = 2 ;
 //			Serial.println("----> ready=true");
 			return true ; }
 		return false ; }
@@ -148,15 +153,17 @@ class cEspNow : public cConfig {
 			nowChannel->received() ; }
 
 	bool sendNow(uint8_t* mac, char* msg) {
-//		Serial.println("cEspNow.sendNow");
-		if ( ready ) {
-//		Serial.print("----> send ");Serial.print(msg);Serial.print(" to "); printAmac(mac); Serial.println();
-			uint8_t result = esp_now_send(mac, (uint8_t *) msg, strlen(msg) + 1);
-			if (result) { /*Serial.print("cEspNow.sendNow result: "); Serial.println(result);*/ return false; }
-			return true ; }
+//		Serial.println("theEspNow.sendNow");
+		if ( state > 0 ) {
+//		Serial.print("----> send ");Serial.print(msg);Serial.print(" to "); printMac(mac); Serial.println();
+			int result = esp_now_send(mac, (uint8_t *) msg, strlen(msg) + 1);
+			if (result == 0) return true ;
+//			else  Serial.println(result,HEX); 
+		}
 		return false ; }
-
+		
 	void onSendResult(const uint8_t *m, bool sendStatus) {
+//		Serial.print("theEspNow.onSendResult");
 		uint8_t mac[cMacLen];
 		for(int i=0 ; i<cMacLen ; i++) mac[i] = m[i];
 		cNowChannel* c ; 
@@ -164,21 +171,29 @@ class cEspNow : public cConfig {
 
 cEspNow theEspNow ;
 
-void cNowChannel :: sendNow() {
-	Serial.println("cNowChannel.sendNow");
-	if (! busy) {
-		cMsg* m = msgs.readFirst() ;
-		if ( m != NULL) {
-			Serial.print("----> send ");Serial.print(m->buf);Serial.print(" to "); printMac(mac); Serial.println();
-			if (theEspNow.sendNow(mac, m->buf)) busy = true ; } } }
+bool cNowChannel :: sendNow() {
+//	Serial.println("cNowChannel.sendNow");
+	cMsg* m = msgs.readFirst() ;
+	if ( m != NULL) {
+//		Serial.print("----> send ");Serial.print(m->buf);Serial.print(" to "); printMac(mac); Serial.println();
+		if (theEspNow.sendNow(mac, m->buf)) busy = busy +1 ;
+		else return false ; }  // return false --> sendNow failed because of internal error --> skip message
+	return true ; }
 
-void cEspNow :: registerCallbacks() {
+void cEspNow :: initNow() {
+	if (state == 0) {
+		WiFi.mode(WIFI_AP_STA);
+		WiFi.disconnect();
+		if (esp_now_init() != 0) ESP.restart();
 #if defined(ESP8266)
-	esp_now_register_recv_cb([](uint8_t *mac, uint8_t *data, uint8_t l) {theEspNow.onReceived(mac, data,l); }) ;
-	esp_now_register_send_cb([](uint8_t* mac, uint8_t sendStatus) {theEspNow.onSendResult(mac, (sendStatus==0)); }) ;}
+		esp_now_set_self_role(ESP_NOW_ROLE_COMBO);
+		esp_now_register_recv_cb([](uint8_t *mac, uint8_t *data, uint8_t l) {theEspNow.onReceived(mac, data,l); }) ;
+		esp_now_register_send_cb([](uint8_t* mac, uint8_t sendStatus) {theEspNow.onSendResult(mac, (sendStatus==0)); }) ;
 #else
-	esp_now_register_recv_cb([](const uint8_t *mac, const uint8_t *data, int l) {theEspNow.onReceived(mac, data,l); }) ;
-	esp_now_register_send_cb([](const uint8_t* mac, esp_now_send_status_t sendStatus) {theEspNow.onSendResult(mac, (sendStatus==0)); }) ;}
+		esp_now_register_recv_cb([](const uint8_t *mac, const uint8_t *data, int l) {theEspNow.onReceived(mac, data,l); }) ;
+		esp_now_register_send_cb([](const uint8_t* mac, esp_now_send_status_t sendStatus) {theEspNow.onSendResult(mac, (sendStatus==0)); }) ;
 #endif
+		state = 1 ; } } 
+
 #endif  // if defined(ESP8266) || defined(ESP32) 
 #endif 
