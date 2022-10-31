@@ -93,11 +93,7 @@ class tList {
 		Te* e = actualLink->element;
 		actualLink =actualLink->next ;
 		return e ;}
-/*
-	Tl* getNextLink(Tl* l) {
-		if (l == NULL ) return anchor ;
-		return l->next ; }
-*/
+		
 	Tl* getFirstLink() {
 		if (anchor == NULL) return NULL ;
 		Tl* l = anchor ;
@@ -121,22 +117,16 @@ class cTimer {
   public:
 	uint64_t timeToExpire ;
 	virtual void onTimeout() = 0 ; 
-
 	cTimer() {timeToExpire = 0 ;}
 
 	void resetTimer() {
-//		Serial.println("resetTimer");
 		timeToExpire = 0 ;
-
 		tLink<cTimer>** p = theTimers.getAnchor() ;
 		while ( *p != NULL) {
-//			Serial.println("----> 1");
 			if ((*p)->element == this) {
-//				Serial.println("----> 2");
 				tLink<cTimer>* l=(*p); 
 				(*p) = (*p)->next;
 				theTimers.returnLink(l);
-//				Serial.println("----> 3"); 
 				return ; }
 			p = &((*p)->next); }}
 
@@ -151,7 +141,6 @@ class cTimer {
 		insertTimer() ;}
 
 	void insertTimer() {
-//		Serial.println("insertTimer");
 		tLink<cTimer>* newL = theTimers.newLink();
 		newL->element = this ;
 		tLink<cTimer>** p = theTimers.getAnchor();
@@ -159,12 +148,10 @@ class cTimer {
 			if((*p)->element->timeToExpire > timeToExpire) {
 				newL-> next = (*p);
 				(*p) = newL ;
-//				Serial.println("----> 1");
 				return; } 
 			p = &((*p)->next); }
 		newL->next = NULL ;
 		(*p) = newL;
-//		Serial.println("----> 2");
 		return; } };
 
 //###################################### cObserver ####################################### 
@@ -209,14 +196,21 @@ cConfigurator* theConfigurator = NULL ;
 class cConfig {
   public:
 	cConfig() { theConfigs.insert(this); }
-	virtual bool configure(const char* key, char* value, int vLen = 0) = 0 ;} ;
+	virtual bool configure(const char* key, char* value, int vLen = 0) = 0 ;
+	virtual void start() = 0 ;} ;
 	
 class cConfigurator {
-  protected:	
+  protected :
 	void configure(char* key, char* value, int vLen = 0) {
 		cConfig* c = theConfigs.readFirst();
 		while ( c != NULL) { 
 			if ( c->configure(key, value, vLen) ) break ;
+			c = theConfigs.readNext(); } } ;
+
+	void start() {
+		cConfig* c = theConfigs.readFirst();
+		while ( c != NULL) { 
+			c->start() ;
 			c = theConfigs.readNext(); } } ;
   public:
 	cConfigurator() {theConfigurator = this ;}

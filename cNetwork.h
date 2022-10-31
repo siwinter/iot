@@ -66,6 +66,7 @@ void printMac(uint8_t* mac) {
 char* getMAC() {
 	uint8_t  mac[6] ;
 	WiFi.macAddress(mac); }
+
 #endif
 
 #define cTopicLen 50
@@ -131,7 +132,10 @@ class cChannel : public cObserved {
 	char topic[cTopicLen] ;
 	char info[cInfoLen] ;
 
-	virtual void connected(){}
+	virtual void connected(){
+		isConnected = true ;
+		theChannels.insert(this) ;}
+		
 	virtual void sendMsg(char* topic, char* info) = 0;
 
 	virtual void sendEvent(char* topic, char* info) {		// cMqttChannel overrides this Method
@@ -150,9 +154,7 @@ class cChannel : public cObserved {
 			delete n ;
 			myNodes.getFirst(); } }
 			
-	cChannel(bool upstream) {
-		if (upstream) theChannels.insert(this) ; // wird vorn in die Liste eingetragen und wird dadurch zum upstream-Channel
-		else theChannels.append(this) ;} 	
+	cChannel() { isConnected = false ; } 	
 	
 	void received() {
 //		Serial.print("received ");
@@ -185,6 +187,7 @@ class cChannel : public cObserved {
 //##################################### cNodeName ########################################
 class cNodeName : public cConfig {
   public :
+	void start() {}
 	bool configure(const char* key, char* value, int vLen) {
 //		Serial.print("cNodeName.configure: "); Serial.println(key);
 		if (strcmp(key, "node") == 0) {
@@ -208,7 +211,8 @@ class cSerialChannel : public cChannel, public cLooper {
 	uint32_t x=0;
   public:
 	bool active ;
-	cSerialChannel() : cChannel(true) {		// insert as upstream (may be changed by next channel)  
+	cSerialChannel() {		// insert as upstream (may be changed by next channel)
+		connected() ;
 		Serial.begin(115200); }
 	
     void onLoop() {

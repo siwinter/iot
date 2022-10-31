@@ -17,10 +17,17 @@
 
 #define EEPROMsize 512
 
+#define state_idle 0
+#define state_config 1
+#define state_start 2
+#define state_ready 3
+
 class cDatabase : public cTimer, public cConfigurator {
   private:
+	int state = 0;
 	int nextAdr = 0 ; 
 	int lastAdr ;
+	
 	bool checkEEPROM() {
 		if ((EEPROM.read(0) != 'I') || (EEPROM.read(1) != 'o') || ( EEPROM.read(2) != 'T')) return false ;
 		int adr = 3 ;
@@ -54,7 +61,9 @@ class cDatabase : public cTimer, public cConfigurator {
 		setMillis(1) ;}
 	
 	void onTimeout(){
-		if ( nextAdr == 0) {
+		int len ;
+		switch (state) {
+		  case state_idle :
 #if defined(ESP8266)
 			EEPROM.begin(EEPROMsize) ;
 #else
@@ -65,20 +74,34 @@ class cDatabase : public cTimer, public cConfigurator {
 			if ( !checkEEPROM()) formatEEPROM() ;
 			nextAdr = 3;
 			setMillis(1) ;
-			return ;}
-//		Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
-		char key[30] ;
-		char value[30] ;
-		int len = EEPROM.read(nextAdr++);
-		if ( len == 0 ) return ;
-		int i; for (i=0; i<len; i++) key[i] = EEPROM.read(nextAdr++) ;
-		key[i] = 0;
-		len = EEPROM.read(nextAdr++);
-		i; for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
-		value[i] = 0;
-//		Serial.print("cDatabase.onTimeout key: "); Serial.println(key);
-		configure(key, value, len);
-		setMillis(1) ; }
+			state = state_config ;
+			return ;
+			
+		  case state_config :
+			Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
+			char key[30] ;
+			char value[30] ;
+			len = EEPROM.read(nextAdr++);
+			if ( len != 0 ) {
+				int i; for (i=0; i<len; i++) key[i] = EEPROM.read(nextAdr++) ;
+				key[i] = 0;
+				len = EEPROM.read(nextAdr++);
+				for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
+				value[i] = 0;
+				Serial.print("---> key: "); Serial.println(key);
+				Serial.print("---> len: "); Serial.println(len);
+				Serial.print("---> val: "); for(int j= 0; j<len; j++) Serial.print(value[j]) ; Serial.println();
+ 				configure(key, value, len); }
+			else {
+				nextAdr = 3 ;
+				state = state_start;}
+			setMillis(1) ; 
+			return ;
+			
+		  case state_start : 
+			start() ;
+			state = state_ready ;
+			return ; } }
 	
 	void deleteData(char* key) {
 		int adr = findKey(key, 3) ;

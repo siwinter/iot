@@ -81,7 +81,6 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		if (state == state_doNotStart) return ;
 		if (brokerIp[0] == 0) return ;
 		if (!client.connected()) {
-			Serial.print("brokerIP: "); Serial.print(brokerIp); Serial.print(" Port "); Serial.println(brokerPort);
 			client.setServer(brokerIp, brokerPort);
 			if (!client.connect(macAdr)) setTimer(5);
 			else {

@@ -80,38 +80,45 @@ class cWebElement {
 #include "cDevice.h"
 #include "cDatabase.h"
 
+#define state_idle 0
+#define state_doNotStart 2
+
 class cWifi : public cTimer, public cDevice, public cConfig {
   private :
 	char stationPwd[20] ;
 	char stationSsid[20] ;
 	char apSsid[20] ;
+	uint8_t state ;
 
   public :
-	cWifi() { 
+	cWifi() {
+		state = state_idle ;
 		strcpy(stationSsid,"") ;
-		setTimer(10);}
-
-	void init(){
-//		Serial.println("cWifi : init");
-		WiFi.mode(WIFI_STA);
-		WiFi.disconnect() ;
-		reconnect() ;
+		strcpy(stationPwd,"") ; 
 		setTimer(10) ; }
 
-	void reconnect() {
-//		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
-		WiFi.begin(stationSsid, stationPwd); }
-
 	bool configure(const char* key, char* value, int vLen) {
-//		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
+		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
 		if (strcmp(key, "ssid") == 0) {
 			strcpy(stationSsid, value);
 			return true ;}
 		if (strcmp(key, "pwd") == 0) {
 			strcpy(stationPwd, value);
-			init();
 			return true ;}
+		if (strcmp(key, "prot") == 0)
+			if (strcmp(value, "Enow") == 0) state = state_doNotStart ;
 		return false ; }
+
+	void start(){
+		if (state != state_doNotStart) {
+			Serial.println("cWifi.start");
+			WiFi.mode(WIFI_STA);
+			WiFi.disconnect() ;
+			reconnect() ; } }
+
+	void reconnect() {
+		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
+		WiFi.begin(stationSsid, stationPwd); }
 
 	void onDisconnected() {
 //		Serial.println("cWifi : Disconnected");
@@ -120,6 +127,7 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 
 	void onTimeout() {
 //		Serial.println("cWiFi.onTimeout");
+		if (state == state_doNotStart) return ;
 		if (WiFi.status() != WL_CONNECTED) {
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
@@ -128,7 +136,7 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 			setValue(val_wifiAP); } }
 			
 	void onGotIP(){
-//		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
+		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
 		setValue(val_on);}
 
 	void onConnected(){ 
