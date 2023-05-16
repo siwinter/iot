@@ -63,7 +63,7 @@ void printMac(uint8_t* mac) {
 	for(int i=0 ; i<6 ; i++) {
 		Serial.print(mac[i], HEX); if(i<5) Serial.print(":"); } }
 
-char* getMAC() {
+void getMAC() {
 	uint8_t  mac[6] ;
 	WiFi.macAddress(mac); }
 
@@ -188,7 +188,7 @@ class cChannel : public cObserved {
 class cNodeName : public cConfig {
   public :
 	void start() {}
-	bool configure(const char* key, char* value, int vLen) {
+	bool configure(const char* key, const char* value, int vLen) {
 //		Serial.print("cNodeName.configure: "); Serial.println(key);
 		if (strcmp(key, "node") == 0) {
 //			Serial.print("node: "); Serial.println(value);

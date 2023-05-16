@@ -196,12 +196,12 @@ cConfigurator* theConfigurator = NULL ;
 class cConfig {
   public:
 	cConfig() { theConfigs.insert(this); }
-	virtual bool configure(const char* key, char* value, int vLen = 0) = 0 ;
+	virtual bool configure(const char* key, const char* value, int vLen = 0) = 0 ;
 	virtual void start() = 0 ;} ;
 	
 class cConfigurator {
   protected :
-	void configure(char* key, char* value, int vLen = 0) {
+	void configure(const char* key, const char* value, int vLen = 0) {
 		cConfig* c = theConfigs.readFirst();
 		while ( c != NULL) { 
 			if ( c->configure(key, value, vLen) ) break ;
@@ -214,7 +214,7 @@ class cConfigurator {
 			c = theConfigs.readNext(); } } ;
   public:
 	cConfigurator() {theConfigurator = this ;}
-	virtual void setConfig(char* key, char* value, int len=0) = 0 ;} ;
+	virtual void setConfig(const char* key, const char* value, int len=0) = 0 ;} ;
 	
 //##################################### systemLoop ####################################### 
 

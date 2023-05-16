@@ -60,7 +60,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		getMAC() ; 
 		state = state_idle ; }
 
-	bool configure(const char* key, char* value, int vLen) {
+	bool configure(const char* key, const char* value, int vLen) {
 		Serial.println("cMqttChannel.configure");
 		Serial.print("--> key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
 		if (strcmp(key, "broker") == 0) {

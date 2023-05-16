@@ -164,7 +164,7 @@ class cEspNow : public cConfig {
 		wifiChannel = 0 ;
 		state = state_idle ; } ;
 		
-	bool configure(const char* key, char* value, int vLen) {
+	bool configure(const char* key, const char* value, int vLen) {
 		Serial.println("cEspNow.configure: "); //Serial.println(key);
 		printState();
 		if (strcmp(key, "mac") == 0) {

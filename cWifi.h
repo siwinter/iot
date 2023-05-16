@@ -57,12 +57,12 @@ class cWebElement {
   protected: 
 	char uri[20] ;
 	void send(const char* txt) {theWebServer.sendContent(txt);}
-	bool getArgument(char* arg, char* param, int pLen) {
+	bool getArgument(const char* arg, char* param, int pLen) {
 		if (!theWebServer.hasArg(arg)) return false;
 		theWebServer.arg(arg).toCharArray(param, pLen) ;
 		return true;}
   public:
-	cWebElement(char* u){
+	cWebElement(const char* u){
 		strncpy(uri,u,20);
 		theWebElements.insert(this) ; }
 	virtual bool handleElement() {return true; } 
@@ -97,7 +97,7 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 		strcpy(stationPwd,"") ; 
 		setTimer(10) ; }
 
-	bool configure(const char* key, char* value, int vLen) {
+	bool configure(const char* key, const char* value, int vLen) {
 		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
 		if (strcmp(key, "ssid") == 0) {
 			strcpy(stationSsid, value);

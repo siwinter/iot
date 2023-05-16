@@ -42,7 +42,7 @@ class cDatabase : public cTimer, public cConfigurator {
 		lastAdr = 3 ;
 		if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ; }
 
-	bool keyEqual(int adr, char* key) {
+	bool keyEqual(int adr, const char* key) {
 		int len = strlen(key);
 		if (len != EEPROM.read(adr++)) return false ;
 		for (int i=0 ; i<len; i++) if (key[i] != EEPROM.read(adr+i)) { return false ; }
@@ -50,7 +50,7 @@ class cDatabase : public cTimer, public cConfigurator {
 
 	int nextKey(int keyAdr){ return keyAdr + EEPROM.read(keyAdr) + EEPROM.read(keyAdr + EEPROM.read(keyAdr)+1)+2 ; }
 
-	int findKey(char* key, int a=3) {
+	int findKey(const char* key, int a=3) {
 		while (EEPROM.read(a) != 0) { 
 			if(keyEqual(a,key)) return a;
 			a = nextKey(a); }
@@ -103,7 +103,7 @@ class cDatabase : public cTimer, public cConfigurator {
 			state = state_ready ;
 			return ; } }
 	
-	void deleteData(char* key) {
+	void deleteData(const char* key) {
 		int adr = findKey(key, 3) ;
 		while (adr != 0) {
 			int destAdr = adr ;
@@ -116,7 +116,7 @@ class cDatabase : public cTimer, public cConfigurator {
 			adr=findKey(key,adr); }
 		if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ; }
 			
-	void setData(char* key, char* data, int dataLen=0) {
+	void setData(const char* key, const char* data, int dataLen=0) {
 		deleteData(key);
 		if (dataLen==0) dataLen=strlen(data);
 		if((lastAdr + strlen(key) + dataLen + 2) > EEPROMsize) Serial.println("error EEPROM size");
@@ -131,12 +131,12 @@ class cDatabase : public cTimer, public cConfigurator {
 			lastAdr = adr;
 			if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ;} }
 			
-	void setConfig(char* key, char* value, int len) {
+	void setConfig(const char* key, const char* value, int len) {
 		if (len == 0) len = strlen(value) ;
 		setData(key, value, len) ;
 		configure(key, value, len);}
 		
-	int getData (char* key, char* data, int len) {
+	int getData (const char* key, char* data, int len) {
 //		Serial.print("getdata key: "); Serial.println(key);
 //		printEEPROM() ;
 		int adr; if ((adr=findKey(key)) == 0) return 0;
