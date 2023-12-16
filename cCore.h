@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "flags.h"
+#include "cLog.h"
 
 #define cmd_off    0
 #define cmd_on     1
@@ -15,6 +16,11 @@
 #define val_blink  		 3
 #define val_connected 	 4
 #define val_wifiAP 		12
+
+
+//######################################## Logger ########################################
+//Logging Log;
+
 
 //#################################### List Template #####################################
 
@@ -106,7 +112,8 @@ class cLooper ;
 tList<tLink<cLooper>, cLooper>  theLoopers ;
 class cLooper {
   public:
-	cLooper() { theLoopers.insert(this); }
+	cLooper() { 
+		theLoopers.insert(this); }
     virtual void onLoop() = 0; } ;
 
 //####################################### cTimer ######################################### 
@@ -168,7 +175,7 @@ class cObserved {
 	tList<tLink<cObserver>, cObserver>  theObservers ;
 	static int oNumber ;			// statisch für alle Objekte (Objektzähler)
 	cObserved() {
-		oNumber = oNumber++ ;
+		oNumber++ ;
 		index = oNumber ; };
 	cObserved(cObserver * o) : cObserved() {addObserver(o);}
 	int addObserver(cObserver * o){

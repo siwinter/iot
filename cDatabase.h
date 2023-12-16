@@ -17,10 +17,10 @@
 
 #define EEPROMsize 512
 
-#define state_idle 0
-#define state_config 1
-#define state_start 2
-#define state_ready 3
+#define state_db_idle 0
+#define state_db_config 1
+#define state_db_start 2
+#define state_db_ready 3
 
 class cDatabase : public cTimer, public cConfigurator {
   private:
@@ -48,7 +48,7 @@ class cDatabase : public cTimer, public cConfigurator {
 		for (int i=0 ; i<len; i++) if (key[i] != EEPROM.read(adr+i)) { return false ; }
 		return true; }
 
-	int nextKey(int keyAdr){ return keyAdr + EEPROM.read(keyAdr) + EEPROM.read(keyAdr + EEPROM.read(keyAdr)+1)+2 ; }
+	int nextKey(int keyAdr){ return keyAdr + EEPROM.read(keyAdr) + EEPROM.read(keyAdr + EEPROM.read(keyAdr)+1)+2 ; } 
 
 	int findKey(const char* key, int a=3) {
 		while (EEPROM.read(a) != 0) { 
@@ -63,7 +63,7 @@ class cDatabase : public cTimer, public cConfigurator {
 	void onTimeout(){
 		int len ;
 		switch (state) {
-		  case state_idle :
+		  case state_db_idle :
 #if defined(ESP8266)
 			EEPROM.begin(EEPROMsize) ;
 #else
@@ -74,11 +74,11 @@ class cDatabase : public cTimer, public cConfigurator {
 			if ( !checkEEPROM()) formatEEPROM() ;
 			nextAdr = 3;
 			setMillis(1) ;
-			state = state_config ;
+			state = state_db_config ;
 			return ;
 			
-		  case state_config :
-			Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
+		  case state_db_config :
+//			Serial.print("nextAdr: "); Serial.print(nextAdr); Serial.print(" lastAdr; "); Serial.println(lastAdr); 
 			char key[30] ;
 			char value[30] ;
 			len = EEPROM.read(nextAdr++);
@@ -88,19 +88,19 @@ class cDatabase : public cTimer, public cConfigurator {
 				len = EEPROM.read(nextAdr++);
 				for (i=0; i<len; i++) value[i] = EEPROM.read(nextAdr++) ;
 				value[i] = 0;
-				Serial.print("---> key: "); Serial.println(key);
-				Serial.print("---> len: "); Serial.println(len);
-				Serial.print("---> val: "); for(int j= 0; j<len; j++) Serial.print(value[j]) ; Serial.println();
+//				Serial.print("---> key: "); Serial.println(key);
+//				Serial.print("---> len: "); Serial.println(len);
+//				Serial.print("---> val: "); for(int j= 0; j<len; j++) Serial.print(value[j]) ; Serial.println();
  				configure(key, value, len); }
 			else {
 				nextAdr = 3 ;
-				state = state_start;}
+				state = state_db_start;}
 			setMillis(1) ; 
 			return ;
 			
-		  case state_start : 
+		  case state_db_start : 
 			start() ;
-			state = state_ready ;
+			state = state_db_ready ;
 			return ; } }
 	
 	void deleteData(const char* key) {
@@ -115,6 +115,9 @@ class cDatabase : public cTimer, public cConfigurator {
 //			Serial.print("delConfig : deleted Adr ");Serial.println(adr);
 			adr=findKey(key,adr); }
 		if (!EEPROM.commit()) Serial.println("EEPROM: error commit") ; }
+
+	void setData(const char* key, const uint8_t* data, int dataLen=0) {
+		setData(key, (const char*) data, dataLen) ; }
 			
 	void setData(const char* key, const char* data, int dataLen=0) {
 		deleteData(key);
@@ -124,7 +127,7 @@ class cDatabase : public cTimer, public cConfigurator {
 //			Serial.print("writeConfig at "); Serial.print(lastAdr); Serial.print("  "); Serial.println(strlen(key));
 			int adr = lastAdr ;
 			EEPROM.write(adr++, strlen(key)) ;
-			for(int i=0; i<strlen(key); i++) EEPROM.write(adr++,key[i]) ;
+			for(uint i=0; i<strlen(key); i++) EEPROM.write(adr++,key[i]) ;
 			EEPROM.write(adr++,dataLen);
 			for(int i=0; i<dataLen; i++) EEPROM.write(adr++,data[i]) ;
 			EEPROM.write(adr,0) ;
@@ -135,10 +138,14 @@ class cDatabase : public cTimer, public cConfigurator {
 		if (len == 0) len = strlen(value) ;
 		setData(key, value, len) ;
 		configure(key, value, len);}
+
+	int getData(const char* key, uint8_t* data, int len) {
+		return getData(key, (char*)data, len) ; }
 		
 	int getData (const char* key, char* data, int len) {
 //		Serial.print("getdata key: "); Serial.println(key);
 //		printEEPROM() ;
+		if (state != state_db_ready) return -1 ;
 		int adr; if ((adr=findKey(key)) == 0) return 0;
 		adr = adr + EEPROM.read(adr) +1 ; 	// adr dataLen
 		int dataLen = EEPROM.read(adr++) ;	// adr+1 = adr data
@@ -158,7 +165,7 @@ class cDatabase : public cTimer, public cConfigurator {
 		int i; for (i=0; i<len; i++) key[i] = EEPROM.read(adr++) ;
 		key[i] = 0;
 		len = EEPROM.read(adr++);
-		i; for (i=0; i<len; i++) data[i] = EEPROM.read(adr++) ;
+		for (i=0; i<len; i++) data[i] = EEPROM.read(adr++) ;
 		data[i] = 0;
 		*dataLen = len ; 
 		return true; } };

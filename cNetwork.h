@@ -99,7 +99,7 @@ class cNode {
 		name[j]=0; }
 		
 	bool isNode(char* topic) {
-		int i;
+		uint i;
 		for (i=0;i<strlen(name);i++) if(topic[4+i] != name[i]) return false;
 		if(topic[4+i] != '/') return false ;
 		return true ; }
@@ -169,7 +169,7 @@ class cChannel : public cObserved {
 		if ((topic[0]=='c')&&(topic[1]=='m')&&(topic[2]=='d')&&(topic[3]=='/')) { // topic: cmd/nodeName/deviceName
 //			Serial.println("cmd");
 			int devicePointer = 0;
-			if (devicePointer = localCmd(topic)) {
+			if (devicePointer == localCmd(topic)) {
 				char* deviceName = topic + devicePointer;
 				cCmdInterface * d = theDevices.readFirst() ;
 				while (d != NULL) {

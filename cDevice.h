@@ -70,7 +70,8 @@ class cHeartbeat : public cDevice, cTimer {
 
 cHeartbeat* newHearbeat(cb_function  f) {
 	cHeartbeat* d =new cHeartbeat() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 //######################################################################
@@ -103,8 +104,9 @@ class cButton : public cDevice, cLooper {
 
 cButton* newButton(int p, bool ao, cb_function  f) {
 	cButton* d =new cButton(p, ao) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
-	return d ; }
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
+	return d ; } ;
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
@@ -122,8 +124,8 @@ class cPoti : public cDevice, cLooper {
   public:
     cPoti(int p ) {
 		pin = p;
-		int lastVal = 0 ;
-		Serial.println("");  //s.w. ohne diese Zeile lässt das Programm sich nicht für ESP8266 übersetzen!!! 
+		lastVal = 0 ;
+//		Serial.println("");  //s.w. ohne diese Zeile lässt das Programm sich nicht für ESP8266 übersetzen!!! 
 		}
 		
     
@@ -136,7 +138,8 @@ class cPoti : public cDevice, cLooper {
 
 cPoti* newPoti(int p, cb_function  f) {
 	cPoti* d =new cPoti(p) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 //######################################################################
@@ -184,7 +187,8 @@ class cLatch : public cDevice, public cTimer {
 
 cLatch* newLatch(int sp, int rp, cb_function f) {
 	cLatch* d =new cLatch(sp, rp) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 
@@ -227,7 +231,8 @@ class cRelais : public cDevice {
 
 cRelais* newRelais(int p, bool ao, cb_function  f) {
 	cRelais* d =new cRelais(p, ao) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  * 
@@ -275,7 +280,8 @@ class cLed : public cRelais, public cTimer {
 			  
 cLed* newLed(int p, bool ao, cb_function  f) {
 	cLed* d = new cLed(p, ao) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 cLed* newLed(cb_function f) { return newLed(LED_BUILTIN,false,f);}
@@ -321,7 +327,8 @@ class cClock : public cDevice, cTimer {
 
 cClock* newClock(cb_function  f) {
 	cClock* d =new cClock() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #if defined(ESP8266)
@@ -353,7 +360,8 @@ class cHzMesser : public cDevice, cTimer {
 
 cHzMesser* newHzM(int p, cb_function  f) {
 	cHzMesser* d =new cHzMesser(p) ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 
@@ -379,7 +387,8 @@ class cVcc : public cIntervalSensor {
 
 cVcc* newVcc(cb_function  f) {
 	cVcc* d =new cVcc() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 /* ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -398,7 +407,8 @@ class cHeap : public cIntervalSensor {
 
 cHeap* newHeap(cb_function  f) {
 	cHeap* d =new cHeap() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #endif
@@ -419,7 +429,8 @@ class cPicoTmp : public cIntervalSensor {
 
 cPicoTmp* newPicoTmp(cb_function  f) {
 	cPicoTmp* d =new cPicoTmp() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #endif
@@ -444,7 +455,8 @@ class cHall : public cIntervalSensor {
 
 cHall* newHall(cb_function  f) {
 	cHall* d =new cHall() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #endif
@@ -483,7 +495,8 @@ class cUltraSonicSensor : public cIntervalSensor {
 
 cUltraSonicSensor* newUSS(int t, int e, cb_function  f) {
 	cUltraSonicSensor* d =new cUltraSonicSensor(t, e); ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #endif

@@ -99,6 +99,7 @@ class cValueTranslator : public cTranslator {
 		while (i<l) {
 			v = v * 10 ;
 			v = v + s[i++] - '0' ; } 
+		if (negativ) v = v* (-1) ;
 		return v ;} ;
 	int decimals ;
   public :

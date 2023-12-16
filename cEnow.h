@@ -170,7 +170,7 @@ class cEspNow : public cConfig {
 		if (strcmp(key, "mac") == 0) {
 //			Serial.print("cEspNow.configure destMAC: "); printMac((uint8_t*)value);
 			for (int i=0 ; i<cMacLen ; i++) destMac[i] = ((uint8_t*)value)[i] ; // to be used when protocol is started
-			if (state != state_idle) ESP.restart ; // dest MAC has been changed in running system
+//			if (state != state_idle) ESP.restart ; // dest MAC has been changed in running system
 			return true ; }
 		if (strcmp(key, "prot") == 0)
 			if (strcmp(value, "Enow") == 0) state = state_ready ;

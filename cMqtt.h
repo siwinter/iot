@@ -61,8 +61,8 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		state = state_idle ; }
 
 	bool configure(const char* key, const char* value, int vLen) {
-		Serial.println("cMqttChannel.configure");
-		Serial.print("--> key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
+//		Serial.println("cMqttChannel.configure");
+//		Serial.print("--> key: "); Serial.print(key); Serial.print(" value: "); Serial.println(value) ;
 		if (strcmp(key, "broker") == 0) {
 			brokerPort = value[4]*256 + value[5] ;
 			brokerIp = IPAddress(value[0], value[1], value[2], value[3]) ;
@@ -77,15 +77,15 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		if ((i == wifiEvent) && (evt == val_on)) start() ; }  // Wifi connected to AccessPoint 
 
 	void start() {
-		Serial.println("cMqtt.start");
+//		Serial.println("cMqtt.start");
 		if (state == state_doNotStart) return ;
 		if (brokerIp[0] == 0) return ;
 		if (!client.connected()) {
-			Serial.print("brokerIP: "); Serial.print(brokerIp); Serial.print(" Port "); Serial.println(brokerPort);
+//			Serial.print("brokerIP: "); Serial.print(brokerIp); Serial.print(" Port "); Serial.println(brokerPort);
 			client.setServer(brokerIp, brokerPort);
 			if (!client.connect(macAdr)) setTimer(5);
 			else {
-				Serial.println("mqtt connected");
+				Log.info("cMqtt connected\n") ;
 				cChannel* c = theChannels.readFirst() ;
 				while(c != NULL) {
 					c->resetNodeList();	
@@ -100,8 +100,8 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 //		Serial.print("cMqtt.sendEvent "); Serial.println(topic);
 		if ( topic[0] == 'n' ) {
 			char t[cTopicLen] = "cmd/";
-			int i = 4;
-			while (topic[i] != '/') t[i++] = topic[i];
+			uint i = 4;
+			while ((topic[i] != '/') && (i< (cTopicLen - 5))) {t[i] = topic[i]; i++ ;}
 			t[i++]='/'; t[i++]='#'; t[i++]=0; 
 			subscribe(t);}
 		topic[0] = 'e';
@@ -139,7 +139,7 @@ const char* htmlMqtt =
 		"<p><form action=\"/setup\">"
 			"<p>Node Name: <input type=\"text\" name=\"node\"pattern=\"{,9}\"></p>"
 			"<p><input type=\"submit\"></p></form></p>" ;
-/*
+
 class cMqttWebsite : public cWebElement {
   public :
 	cMqttWebsite() : cWebElement("/setup") {}
@@ -182,6 +182,6 @@ class cMqttWebsite : public cWebElement {
 } ; 
 
 cMqttWebsite theMqttWebsite ;
-*/
+
 #endif
 #endif

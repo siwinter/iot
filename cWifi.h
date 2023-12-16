@@ -68,7 +68,7 @@ class cWebElement {
 	virtual bool handleElement() {return true; } 
 	virtual bool handleElement(char*u){
 		if (strlen(u) != strlen(uri)) return false;
-		for(int i=0; i<strlen(uri); i++) if (u[i] != uri[i]) return false ;
+		for(uint i=0; i<strlen(uri); i++) if (u[i] != uri[i]) return false ;
 		return handleElement(); } } ;
 //######################################## cWifi ########################################
 
@@ -80,8 +80,8 @@ class cWebElement {
 #include "cDevice.h"
 #include "cDatabase.h"
 
-#define state_idle 0
-#define state_doNotStart 2
+#define state_wifi_idle 0
+#define state_wifi_doNotStart 2
 
 class cWifi : public cTimer, public cDevice, public cConfig {
   private :
@@ -92,13 +92,13 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 
   public :
 	cWifi() {
-		state = state_idle ;
+		state = state_wifi_idle ;
 		strcpy(stationSsid,"") ;
 		strcpy(stationPwd,"") ; 
 		setTimer(10) ; }
 
 	bool configure(const char* key, const char* value, int vLen) {
-		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
+//		Serial.print("cWifi.configure key: "), Serial.print(key); Serial.print(" value: ") ; Serial.println(value) ;
 		if (strcmp(key, "ssid") == 0) {
 			strcpy(stationSsid, value);
 			return true ;}
@@ -106,18 +106,18 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 			strcpy(stationPwd, value);
 			return true ;}
 		if (strcmp(key, "prot") == 0)
-			if (strcmp(value, "Enow") == 0) state = state_doNotStart ;
+			if (strcmp(value, "Enow") == 0) state = state_wifi_doNotStart ;
 		return false ; }
 
 	void start(){
-		if (state != state_doNotStart) {
-			Serial.println("cWifi.start");
+		if (state != state_wifi_doNotStart) {
+			Log.info("cWifi.start\n") ;
 			WiFi.mode(WIFI_STA);
 			WiFi.disconnect() ;
-			reconnect() ; } }
+			reconnect() ; }}
 
 	void reconnect() {
-		Serial.print("reconnect ");Serial.print(stationSsid);Serial.print(" ");Serial.println(stationPwd);
+		Log.warning("cWifi reconnect to %s \n", stationSsid) ;
 		WiFi.begin(stationSsid, stationPwd); }
 
 	void onDisconnected() {
@@ -127,7 +127,7 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 
 	void onTimeout() {
 //		Serial.println("cWiFi.onTimeout");
-		if (state == state_doNotStart) return ;
+		if (state == state_wifi_doNotStart) return ;
 		if (WiFi.status() != WL_CONNECTED) {
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
@@ -136,11 +136,12 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 			setValue(val_wifiAP); } }
 			
 	void onGotIP(){
-		Serial.print("cWifi : onGotIP "); Serial.println(WiFi.localIP().toString());
+		IPAddress ip = WiFi.localIP();
+		Log.info("cWifi : onGotIP %u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
 		setValue(val_on);}
 
 	void onConnected(){ 
-//		Serial.println("cWiFi.onConnected");
+		Log.debug("cWiFi.onConnected");
 } } ;
 			
 cWifi theWifi ;
@@ -242,7 +243,8 @@ class cRssi : public cIntervalSensor {
 
 cRssi* newRssi(cb_function  f) {
 	cRssi* d =new cRssi() ;
-	cCallBackAdapter* cb = new cCallBackAdapter(f, d);
+//	cCallBackAdapter* cb = 
+	new cCallBackAdapter(f, d);
 	return d ; }
 
 #endif

@@ -28,7 +28,7 @@ void printIP(uint8_t* ip) {
 		Serial.print(ip[i], DEC); if(i<3) Serial.print("."); } }
 
 bool txt2Mac(const char* txt, uint8_t* mac) {
-	int i = 0; int j = 0 ;
+	uint i = 0; uint j = 0 ;
 	mac[j] = 0 ;
 	while ( i < strlen(txt) ) {
 		char c = txt[i++] ;
@@ -40,7 +40,7 @@ bool txt2Mac(const char* txt, uint8_t* mac) {
 	return true ; }
 
 bool txt2IP(const char* txt, uint8_t* ip) {
-	int i = 0; int j = 0 ;
+	uint i = 0; uint j = 0 ;
 	ip[j] = 0 ;
 	while ( i < strlen(txt) ) {
 		char c = txt[i++] ;
@@ -51,7 +51,7 @@ bool txt2IP(const char* txt, uint8_t* ip) {
 
 bool txt2Port(const char* txt, uint8_t* port) {
 	int p = 0 ;
-	int i = 0 ;
+	uint i = 0 ;
 	while(i<strlen(txt)) {
 		char c = txt[i++] ;
 		if((c >='0') && (c <= '9')) p = p*10 + c -'0';
@@ -82,7 +82,7 @@ class cSetup : public cCmdInterface {
 	
 	bool receiveCmd(char* name, char* info) {
 		if ( strcmp("setup", name) != 0 ) return false ;   
-		int i; for (i=0 ; i<strlen(info) ; i++) if ( info[i] == ';') break;
+		uint i; for (i=0 ; i<strlen(info) ; i++) if ( info[i] == ';') break;
 		if (i<strlen(info)) {
 			info[i] = 0 ;
 			param = info + strlen(info) + 1; }
@@ -93,8 +93,8 @@ class cSetup : public cCmdInterface {
 		if ( strcmp("broker", info) == 0 ) {
 			uint8_t brk[6];
 			char* txtPort;
-			int port;
-			int i; for (i=0 ; i<strlen(param) ; i++) if ( param[i] == ';') break;
+//			int port;
+			uint i; for (i=0 ; i<strlen(param) ; i++) if ( param[i] == ';') break;
 			if (i==strlen(param)) { brk[4] = 1883/256 ; brk[5] = 1883%256; }
 			else {
 				param[i] = 0 ;
