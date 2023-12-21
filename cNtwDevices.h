@@ -42,6 +42,7 @@ class cTxtAdapter : public cCmdInterface , public cObserver {
 		theEvtTopic[l] = 0 ; }
 	
 	bool receiveCmd(char* name, char* info) {
+//		Log.debug("%s receiveCmd %s %s" ,device, name, info);
 		if ( strcmp(deviceName, name) != 0 ) return false ;
 		doComand(info) ;
 		return true ;} };

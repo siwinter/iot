@@ -1,5 +1,6 @@
 #ifndef MQTT_h
 #define MQTT_h
+#include "flags.h"
 #if defined(WIFI_AV)
 
 #include <Arduino.h>
@@ -73,19 +74,24 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 		return false ; }
 
 	int wifiEvent ;
-	void onEvent(int i, int evt) { 
+	void onEvent(int i, int evt) {
+		Log.debug("cMqtt.onEvent %d", evt) ;
 		if ((i == wifiEvent) && (evt == val_on)) start() ; }  // Wifi connected to AccessPoint 
 
 	void start() {
-//		Serial.println("cMqtt.start");
+		Log.debug("cMqtt.start");
 		if (state == state_doNotStart) return ;
 		if (brokerIp[0] == 0) return ;
 		if (!client.connected()) {
-//			Serial.print("brokerIP: "); Serial.print(brokerIp); Serial.print(" Port "); Serial.println(brokerPort);
+			Log.debug("brokerIP: %d.%d.%d.%d:%i",brokerIp[0],brokerIp[1],brokerIp[2],brokerIp[3], brokerPort);
 			client.setServer(brokerIp, brokerPort);
-			if (!client.connect(macAdr)) setTimer(5);
+			Serial.println("-----> 1") ;
+			if (!client.connect(macAdr)) {
+				Serial.println("-----> 2") ;
+				setTimer(5);
+				Serial.println("-----> 3") ; }
 			else {
-				Log.info("cMqtt connected\n") ;
+				Log.info("cMqtt connected") ;
 				cChannel* c = theChannels.readFirst() ;
 				while(c != NULL) {
 					c->resetNodeList();	
@@ -93,11 +99,11 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 				theChannels.insert(this) ; } } }
 
 	void sendMsg(char* topic, char* info) {
-		Serial.print("cMqtt.sendMsg: "); Serial.print(topic); Serial.print(" "); Serial.println(info);
+		Log.debug("cMqtt.sendMsg: %s : %s", topic, info);
 		client. publish(topic, info); }
 
 	void sendEvent(char* topic, char* info) {
-//		Serial.print("cMqtt.sendEvent "); Serial.println(topic);
+		Log.debug("cMqtt.sendEvent %s", topic);
 		if ( topic[0] == 'n' ) {
 			char t[cTopicLen] = "cmd/";
 			uint i = 4;
@@ -111,11 +117,11 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 	bool sendComand(char* topic, char* info) {return false ; }	// mqtt always upstream never forwards cmd-message
 
 	void subscribe(char* topic) { 
-//		Serial.print("cMqtt.subscribe "); Serial.println(topic);
+//		Log.debug("cMqtt.subscribe %s", topic);
 		client.subscribe(topic) ;}
 
 	void onTimeout() {
-//		Serial.println("cMqtt.onTimeout");
+		Log.debug("cMqtt.onTimeout");
 		start() ; }
 
 	void onLoop() { client.loop() ; } };

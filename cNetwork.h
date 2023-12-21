@@ -121,6 +121,7 @@ class cChannel : public cObserved {
 	bool isConnected = false;
 	
 	int localCmd(char* topic) {				// cmd/nodeName/deviceName
+//		Log.debug("localCmd compare %s and %s",topic, theNodeName) ;
 		char* t = topic + 4 ;
 		if((t[0]=='.') && (t[1]=='/')) return 6 ;
 		int nameLength = strlen(theNodeName) ;
@@ -168,11 +169,13 @@ class cChannel : public cObserved {
 			return ; } 
 		if ((topic[0]=='c')&&(topic[1]=='m')&&(topic[2]=='d')&&(topic[3]=='/')) { // topic: cmd/nodeName/deviceName
 //			Serial.println("cmd");
-			int devicePointer = 0;
-			if (devicePointer == localCmd(topic)) {
+			int devicePointer = localCmd(topic);
+			if (devicePointer > 0) {
 				char* deviceName = topic + devicePointer;
+//				Log.debug("--> deviceName: %s",deviceName) ;
 				cCmdInterface * d = theDevices.readFirst() ;
 				while (d != NULL) {
+//					Log.debug("received cmd %s for %s", info, deviceName);
 					if (d->receiveCmd(deviceName, info)) return ;
 					d = theDevices.readNext(); } }
 			else {
@@ -210,6 +213,7 @@ class cSerialChannel : public cChannel, public cLooper {
 	char* buf ;
 	uint32_t x=0;
   public:
+	uint32_t t ;
 	bool active ;
 	cSerialChannel() {		// insert as upstream (may be changed by next channel)
 		connected() ;
@@ -219,8 +223,10 @@ class cSerialChannel : public cChannel, public cLooper {
 		char c;
 		if (Serial.available()) {
 			c = Serial.read();
+//			Serial.print(c) ;
 			switch (c) {
 			  case '>':
+//			  	Log.debug("begin data");
 				receiving = 1 ;
 				msgIndex = 0 ;
 				buf = topic ;
@@ -238,6 +244,7 @@ class cSerialChannel : public cChannel, public cLooper {
 			  case 10:
 				if (receiving > 0) {
 					buf[msgIndex++] = 0 ;
+					Log.debug("received: %s : %s", topic, info) ;
 //					Serial.print("cSerialChannel : received  ");Serial.print(topic);Serial.print(":");Serial.println(info);
 					received();
 					receiving = 0; }

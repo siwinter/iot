@@ -111,13 +111,13 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 
 	void start(){
 		if (state != state_wifi_doNotStart) {
-			Log.info("cWifi.start\n") ;
+			Log.info("cWifi.start") ;
 			WiFi.mode(WIFI_STA);
 			WiFi.disconnect() ;
 			reconnect() ; }}
 
 	void reconnect() {
-		Log.warning("cWifi reconnect to %s \n", stationSsid) ;
+		Log.warning("cWifi reconnect to %s", stationSsid) ;
 		WiFi.begin(stationSsid, stationPwd); }
 
 	void onDisconnected() {
@@ -150,9 +150,13 @@ WiFiEventHandler callbackConnected    = WiFi.onStationModeConnected([](const WiF
 WiFiEventHandler callbackDisconnected = WiFi.onStationModeDisconnected([](const WiFiEventStationModeDisconnected& e){theWifi.onDisconnected();});
 WiFiEventHandler callbackGotIP        = WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP& e){ theWifi.onGotIP();});
 #else
-WiFiEventId_t callbackConnected     = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onConnected();}, WiFiEvent_t::SYSTEM_EVENT_STA_CONNECTED);
+/* WiFiEventId_t callbackConnected     = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onConnected();}, WiFiEvent_t::SYSTEM_EVENT_STA_CONNECTED);
 WiFiEventId_t callbackDisconnected  = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onDisconnected();}, WiFiEvent_t::SYSTEM_EVENT_STA_DISCONNECTED);
 WiFiEventId_t callbackGotIP         = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onGotIP();}, WiFiEvent_t::SYSTEM_EVENT_STA_GOT_IP);
+*/
+WiFiEventId_t callbackConnected     = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onConnected();}, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_CONNECTED);
+WiFiEventId_t callbackDisconnected  = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onDisconnected();}, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+WiFiEventId_t callbackGotIP         = WiFi.onEvent([](WiFiEvent_t e, WiFiEventInfo_t i){theWifi.onGotIP();}, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
 #endif
 
 //######################################## cWeb ########################################## 

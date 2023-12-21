@@ -16,34 +16,39 @@ class cLog {
     va_list vl ;
     char logTxt[100] ;
     uint8_t level ;
-    
+
   public :
     cLog() { level = LOG_LEVEL_SILENT ; }
     void begin(uint8_t l) {level = l ;}
-    void error(char* txt ...) {
+    void error(const char* txt ...) {
         if (level >= LOG_LEVEL_ERROR) {
             va_start(vl,txt);
-            int ret = vsprintf(logTxt, txt, vl);
+            vsprintf(logTxt, txt, vl);
             va_end(vl);
             Serial.println(logTxt);} }
-    void warning(char* txt ...) {
+    void warning(const char* txt ...) {
         if (level >= LOG_LEVEL_WARNING) {
             va_start(vl,txt);
-            int ret = vsprintf(logTxt, txt, vl);
+            vsprintf(logTxt, txt, vl);
             va_end(vl);
             Serial.println(logTxt);} }
-    void info(char* txt ...) {
+    void info(const char* txt ...) {
         if (level >= LOG_LEVEL_INFO) {
             va_start(vl,txt);
-            int ret = vsprintf(logTxt, txt, vl);
+            vsprintf(logTxt, txt, vl);
             va_end(vl);
             Serial.println(logTxt);} }
-    void debug(char* txt ...) {
+    void debug(const char* txt ...) {
         if (level >= LOG_LEVEL_DEBUG) {
             va_start(vl,txt);
-            int ret = vsprintf(logTxt, txt, vl);
+            vsprintf(logTxt, txt, vl);
             va_end(vl);
-            Serial.println(logTxt);} } } ;
+            Serial.println(logTxt);} }
+    void trace(const char* txt ...) {
+        va_start(vl,txt);
+        vsprintf(logTxt, txt, vl);
+        va_end(vl);
+        Serial.println(logTxt); } } ;
 
 cLog Log ;
 #endif
