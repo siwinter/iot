@@ -19,12 +19,11 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) ;
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
 
-
 #define state_idle 0
 #define state_ready 2
 #define state_doNotStart 5
 
-class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObserver, public cConfig {
+class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObserver/*, public cConfig*/ {
   private :
 	uint8_t state ;
 	char macAdr[13] ;
@@ -57,7 +56,7 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
   public :
 	cMqttChannel() {
 		client.setCallback(mqttCallback);
-//		wifiEvent =theWifi.addObserver(this);
+		wifiEvent =theWifi.addObserver(this);
 		getMAC() ; 
 		state = state_idle ; }
 
@@ -75,21 +74,30 @@ class cMqttChannel : public cChannel, public cLooper, public cTimer, public cObs
 
 	int wifiEvent ;
 	void onEvent(int i, int evt) {
-		Log.debug("cMqtt.onEvent %d", evt) ;
-		if ((i == wifiEvent) && (evt == val_on)) start() ; }  // Wifi connected to AccessPoint 
+		Log.debug("cMqtt.onEvent %d", evt) ;	  // Wifi connected to AccessPoint
+		if ((i == wifiEvent) && (evt == val_on)) {
+			char value[6];
+			if (theDataBase.getData("prot",value,6)) if (strcmp(value, "MQTT") != 0) return ;
+			if (theDataBase.getData("broker",value,6)) {
+//				Serial.println("-----> 1") ;
+				brokerPort = value[4]*256 + value[5] ;
+				brokerIp = IPAddress(value[0], value[1], value[2], value[3]) ;
+				start() ;} } }
 
 	void start() {
 		Log.debug("cMqtt.start");
-		if (state == state_doNotStart) return ;
+//		if (state == state_doNotStart) return ;
 		if (brokerIp[0] == 0) return ;
+//		Serial.println("-----> 2") ;
 		if (!client.connected()) {
 			Log.debug("brokerIP: %d.%d.%d.%d:%i",brokerIp[0],brokerIp[1],brokerIp[2],brokerIp[3], brokerPort);
 			client.setServer(brokerIp, brokerPort);
-			Serial.println("-----> 1") ;
 			if (!client.connect(macAdr)) {
-				Serial.println("-----> 2") ;
-				setTimer(5);
-				Serial.println("-----> 3") ; }
+				Log.debug("CMqtt setTimer");
+//				Serial.println("-----> 3") ;
+				setTimer(1);
+//				Serial.println("-----> 4") ; 
+			}
 			else {
 				Log.info("cMqtt connected") ;
 				cChannel* c = theChannels.readFirst() ;

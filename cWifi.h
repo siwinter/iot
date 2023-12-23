@@ -121,18 +121,18 @@ class cWifi : public cTimer, public cDevice, public cConfig {
 		WiFi.begin(stationSsid, stationPwd); }
 
 	void onDisconnected() {
-//		Serial.println("cWifi : Disconnected");
+		Log.warning("cWifi onDisconnected") ;
 		setValue(val_off);
 		reconnect();}
 
 	void onTimeout() {
-//		Serial.println("cWiFi.onTimeout");
+		Log.debug("cWifi onTimeout") ;
 		if (state == state_wifi_doNotStart) return ;
 		if (WiFi.status() != WL_CONNECTED) {
 			WiFi.disconnect() ;
 			WiFi.mode(WIFI_AP);
 			WiFi.softAP("newIoT");
-//			Serial.print("cWiFi new softAP: "); Serial.println("newIoT");
+			Log.debug("cWifi onTimout open softAP newIoT") ;
 			setValue(val_wifiAP); } }
 			
 	void onGotIP(){

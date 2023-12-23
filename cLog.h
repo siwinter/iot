@@ -40,6 +40,7 @@ class cLog {
             Serial.println(logTxt);} }
     void debug(const char* txt ...) {
         if (level >= LOG_LEVEL_DEBUG) {
+            Serial.print(theUpTime.min); Serial.print(" : "); Serial.print(theUpTime.sec);  Serial.print(" :");
             va_start(vl,txt);
             vsprintf(logTxt, txt, vl);
             va_end(vl);

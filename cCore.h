@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include "flags.h"
-#include "cLog.h"
 
 #define cmd_off    0
 #define cmd_on     1
@@ -192,6 +191,23 @@ class cObserved {
 		} } };
 			
 int  cObserved :: oNumber = 0 ;	// Initialisisierung des Objektzählers
+
+class cUpTime : public cTimer {
+  public :
+	uint16_t day ;
+	uint8_t hour ;
+	uint8_t min ;
+	uint8_t sec ;
+	cUpTime() {
+		day=0; hour=0; min=0; sec=0;
+		setTimer(1) ; }
+	void onTimeout() { 
+		setTimer(1) ;
+		if (++sec > 59) if (++min > 59) if (++hour > 23) ++day; } } ;
+
+cUpTime theUpTime ;
+
+#include "cLog.h"
 
 //#################################### cConfigurator ##################################### 
 class cConfig ;
